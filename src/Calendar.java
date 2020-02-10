@@ -12,8 +12,8 @@ public class Calendar {
 
     private boolean isFirstSelection=true;
     private JPanel previousTile;
-    LocalDate date=LocalDate.of(2019, Month.DECEMBER, 22);
-    DayOfWeek firstDayOfTheWeek=DayOfWeek.MONDAY;
+    LocalDate date=LocalDate.of(2019, Month.APRIL, 22);
+    DayOfWeek firstDayOfTheWeek=DayOfWeek.SUNDAY;
 
     public Calendar() {
         JFrame frame=new JFrame();
@@ -50,13 +50,15 @@ public class Calendar {
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
+                // I need to get the height of dayNumber to determine the y-coordinate for placing it precisely in the upper left
+                // corner of the tile.
                 Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(String.valueOf(dayNumber), g2d);
                 g2d.drawString(String.valueOf(dayNumber), 0, (int) Math.ceil(stringBounds.getHeight()));
             }
 
             @Override
             public Dimension getPreferredSize() {
-                return new Dimension(100, 100);
+                return new Dimension(100, 100); // To do: get rid of magic numbers.
             }
 
             public int getDayNumber() {
@@ -64,16 +66,13 @@ public class Calendar {
             }
         }
 
-
-
-
         int rows =getNrOfWeeksInMonth(YearMonth.of(date.getYear(), date.getMonth()), firstDayOfTheWeek);
         //Logger.getGlobal().info("Rows: " + rows);
         int columns=7; // 7 days in a week. One week per row.
         JPanel centerPanel=new JPanel(new GridLayout(rows, columns));
 
-        int nrOfDaysInMonth=date.lengthOfMonth(); //date.getMonth().maxLength();
-        //Logger.getGlobal().info("Number of days in month: " + nrOfDaysInMonth);
+        int nrOfDaysInCurrentMonth=date.lengthOfMonth(); //date.getMonth().maxLength();
+        //Logger.getGlobal().info("Number of days in month: " + nrOfDaysInCurrentMonth);
 
         int firstDayOfMonthWeekValue=date.withDayOfMonth(1).getDayOfWeek().getValue();
         Logger.getGlobal().info("First day of the month week value: " + firstDayOfMonthWeekValue);
@@ -83,7 +82,17 @@ public class Calendar {
 
         int prevMonthLastDayOfMonthWeekValue=LocalDate.of(date.getYear(), getPreviousMonth(date.getMonthValue()), prevMonthNrOfDays).getDayOfWeek().getValue();
 
-        int dayNumber=firstDayOfMonthWeekValue==firstDayOfTheWeek.getValue()?1:prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
+        int dayNumber=0;
+        boolean isPrevMonth=false;
+        boolean isNextMonth=false;
+        if(firstDayOfMonthWeekValue==firstDayOfTheWeek.getValue()){
+            dayNumber=1;
+        }
+        else{
+            dayNumber=prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
+            isPrevMonth=true;
+        }
+        //int dayNumber=firstDayOfMonthWeekValue==firstDayOfTheWeek.getValue()?1:prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
         Logger.getGlobal().info("dayNumber: " + dayNumber);
 
         for (int i = 0; i < rows; i++) {
@@ -91,7 +100,7 @@ public class Calendar {
                 //Logger.getGlobal().info("" + calendar.get(Calendar.MONTH));
                 Tile tile = new Tile(dayNumber);
                 // Today's tile should have a red border.
-                if(tile.getDayNumber()==date.getDayOfWeek().getValue()){
+                if(!isPrevMonth && !isNextMonth && tile.getDayNumber()==date.getDayOfWeek().getValue()){
                     tile.setBorder(BorderFactory.createLineBorder(Color.RED));
                 }
                 else{
@@ -115,8 +124,14 @@ public class Calendar {
                 });
                 centerPanel.add(tile);
                 dayNumber++;
-                if(dayNumber>nrOfDaysInMonth){
+
+                if(isPrevMonth && dayNumber>prevMonthNrOfDays){
                     dayNumber=1;
+                    isPrevMonth=false;
+                }
+                else if(!isPrevMonth && dayNumber>nrOfDaysInCurrentMonth){
+                    dayNumber=1;
+                    isNextMonth=true;
                 }
             }
         }
@@ -127,13 +142,26 @@ public class Calendar {
     private JPanel createTopPanel(){
 
         JPanel panel=new JPanel(new GridLayout(1, 7));
-        panel.add(new JLabel("Monday", SwingConstants.CENTER));
-        panel.add(new JLabel("Tuesday", SwingConstants.CENTER));
-        panel.add(new JLabel("Wednesday", SwingConstants.CENTER));
-        panel.add(new JLabel("Thursday", SwingConstants.CENTER));
-        panel.add(new JLabel("Friday", SwingConstants.CENTER));
-        panel.add(new JLabel("Saturday", SwingConstants.CENTER));
-        panel.add(new JLabel("Sunday", SwingConstants.CENTER));
+        if(firstDayOfTheWeek==DayOfWeek.MONDAY) {
+
+            panel.add(new JLabel("Monday", SwingConstants.CENTER));
+            panel.add(new JLabel("Tuesday", SwingConstants.CENTER));
+            panel.add(new JLabel("Wednesday", SwingConstants.CENTER));
+            panel.add(new JLabel("Thursday", SwingConstants.CENTER));
+            panel.add(new JLabel("Friday", SwingConstants.CENTER));
+            panel.add(new JLabel("Saturday", SwingConstants.CENTER));
+            panel.add(new JLabel("Sunday", SwingConstants.CENTER));
+        }
+        else if(firstDayOfTheWeek==DayOfWeek.SUNDAY){
+
+            panel.add(new JLabel("Sunday", SwingConstants.CENTER));
+            panel.add(new JLabel("Monday", SwingConstants.CENTER));
+            panel.add(new JLabel("Tuesday", SwingConstants.CENTER));
+            panel.add(new JLabel("Wednesday", SwingConstants.CENTER));
+            panel.add(new JLabel("Thursday", SwingConstants.CENTER));
+            panel.add(new JLabel("Friday", SwingConstants.CENTER));
+            panel.add(new JLabel("Saturday", SwingConstants.CENTER));
+        }
         return panel;
     }
 
@@ -147,7 +175,7 @@ public class Calendar {
         int firstWeekDayOfMonth=yearMonth.atDay(1).getDayOfWeek().getValue();
 
         // Determine how many days the month has.
-        int nrOfDaysInMonth=yearMonth.lengthOfMonth();
+        int nrOfDaysInCurrentMonth=yearMonth.lengthOfMonth();
 
         // If the first day of the month is not also the preferred first day of the week, determine how many days are in
         // the first week.
@@ -161,7 +189,7 @@ public class Calendar {
                 nrOfDaysInFirstWeek++;
             }
             // Subtract the number of days in the first week from the total number of days in the month.
-            nrOfDaysInMonth-=nrOfDaysInFirstWeek;
+            nrOfDaysInCurrentMonth-=nrOfDaysInFirstWeek;
             // Increase the number of weeks in the month by one.
             nrOfWeeksInMonth++;
         }
@@ -169,7 +197,7 @@ public class Calendar {
         // is equal to the number of days in the month divided by 7 if it's a multiple of 7, else you have to add 1
         // (e.g. if the preferred first day of the week is Sunday and the first day of February is a Sunday and February
         // has 28 days, there'd be 28/7=4 weeks in February. If February has 29 days there'd be 29/7=4 + 1 weeks.
-        nrOfWeeksInMonth+=nrOfDaysInMonth%7==0?nrOfDaysInMonth/7:nrOfDaysInMonth/7+1;
+        nrOfWeeksInMonth+=nrOfDaysInCurrentMonth%7==0?nrOfDaysInCurrentMonth/7:nrOfDaysInCurrentMonth/7+1;
 
         return nrOfWeeksInMonth;
     }

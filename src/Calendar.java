@@ -137,14 +137,12 @@ public class Calendar {
         JPanel bottomPanel=new JPanel(new GridLayout(1, 7));
 
 
-        int dayOfTheWeek;
-        int nrOfIterations;
+        int dayOfTheWeekIndex=firstDayOfTheWeek.getValue()-1;
+        int nrOfIterations=0;
         if(firstDayOfTheWeek==DayOfWeek.MONDAY) {
 
-            dayOfTheWeek=firstDayOfTheWeek.getValue()-1;
-            nrOfIterations=0;
-            while(nrOfIterations<7){
-                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeek]));
+            while(nrOfIterations<daysOfTheWeek.length){
+                //bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeek]));
                 nrOfIterations++;
 
             }
@@ -158,14 +156,15 @@ public class Calendar {
         }
         else if(firstDayOfTheWeek==DayOfWeek.SUNDAY){
 
-            dayOfTheWeek=DayOfWeek.SUNDAY.getValue()-1;
-            nrOfIterations=0;
-            while(nrOfIterations<7){
-                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeek]));
-                if(dayOfTheWeek==DayOfWeek.SUNDAY.getValue()){
-                       dayOfTheWeek=1;
+            while(nrOfIterations<daysOfTheWeek.length){
+                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeekIndex]));
+                if(dayOfTheWeekIndex==DayOfWeek.SUNDAY.getValue()-1){
+                       dayOfTheWeekIndex=0;
+                       nrOfIterations++;
+                       continue;
                 }
                 nrOfIterations++;
+                dayOfTheWeekIndex++;
             }
             /*bottomPanel.add(new JLabel("Sunday", SwingConstants.CENTER));
             bottomPanel.add(new JLabel("Monday", SwingConstants.CENTER));

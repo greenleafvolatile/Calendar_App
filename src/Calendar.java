@@ -21,7 +21,7 @@ public class Calendar {
         date=LocalDate.now();
         calendarFrame.getContentPane().setLayout(new BorderLayout());
         calendarFrame.add(createCenterPanel(), BorderLayout.CENTER);
-        calendarFrame.add(createTopPanel(), BorderLayout.NORTH);
+        calendarFrame.add(createNorthPanel(), BorderLayout.NORTH);
         createMenuBar();
         calendarFrame.pack();
         calendarFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -73,7 +73,7 @@ public class Calendar {
         int columns=7; // 7 days in a week. One week per row.
         JPanel centerPanel=new JPanel(new GridLayout(rows, columns));
 
-        int nrOfDaysInCurrentMonth=date.lengthOfMonth(); //date.getMonth().maxLength();
+        int nrOfDaysInCurrentMonth=date.lengthOfMonth();
 
         int firstDayOfMonthWeekValue=date.withDayOfMonth(1).getDayOfWeek().getValue();
 
@@ -128,35 +128,61 @@ public class Calendar {
     }
 
 
-    private JPanel createTopPanel(){
+    private JPanel createNorthPanel(){
 
-        JPanel panel=new JPanel(new GridLayout(1, 7));
+        String[] daysOfTheWeek={"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+
+        //JPanel northPanel=new JPanel(new GridLayout(2, 1));
+        //JPanel topPanel=new JPanel(new GridLayout(1, 1));
+        JPanel bottomPanel=new JPanel(new GridLayout(1, 7));
+
+
+        int dayOfTheWeek;
+        int nrOfIterations;
         if(firstDayOfTheWeek==DayOfWeek.MONDAY) {
 
-            panel.add(new JLabel("Monday", SwingConstants.CENTER));
-            panel.add(new JLabel("Tuesday", SwingConstants.CENTER));
-            panel.add(new JLabel("Wednesday", SwingConstants.CENTER));
-            panel.add(new JLabel("Thursday", SwingConstants.CENTER));
-            panel.add(new JLabel("Friday", SwingConstants.CENTER));
-            panel.add(new JLabel("Saturday", SwingConstants.CENTER));
-            panel.add(new JLabel("Sunday", SwingConstants.CENTER));
+            dayOfTheWeek=firstDayOfTheWeek.getValue()-1;
+            nrOfIterations=0;
+            while(nrOfIterations<7){
+                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeek]));
+                nrOfIterations++;
+
+            }
+            /*bottomPanel.add(new JLabel("Monday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Tuesday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Wednesday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Thursday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Friday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Saturday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Sunday", SwingConstants.CENTER));*/
         }
         else if(firstDayOfTheWeek==DayOfWeek.SUNDAY){
 
-            panel.add(new JLabel("Sunday", SwingConstants.CENTER));
-            panel.add(new JLabel("Monday", SwingConstants.CENTER));
-            panel.add(new JLabel("Tuesday", SwingConstants.CENTER));
-            panel.add(new JLabel("Wednesday", SwingConstants.CENTER));
-            panel.add(new JLabel("Thursday", SwingConstants.CENTER));
-            panel.add(new JLabel("Friday", SwingConstants.CENTER));
-            panel.add(new JLabel("Saturday", SwingConstants.CENTER));
+            dayOfTheWeek=DayOfWeek.SUNDAY.getValue()-1;
+            nrOfIterations=0;
+            while(nrOfIterations<7){
+                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeek]));
+                if(dayOfTheWeek==DayOfWeek.SUNDAY.getValue()){
+                       dayOfTheWeek=1;
+                }
+                nrOfIterations++;
+            }
+            /*bottomPanel.add(new JLabel("Sunday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Monday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Tuesday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Wednesday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Thursday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Friday", SwingConstants.CENTER));
+            bottomPanel.add(new JLabel("Saturday", SwingConstants.CENTER));*/
         }
-        return panel;
+        //northPanel.add(topPanel);
+        //northPanel.add(bottomPanel);
+        return bottomPanel;
     }
 
     private void createMenuBar(){
         JMenuBar menuBar=new JMenuBar();
-        JMenu calendarMenu=new JMenu("Calendar");
+        JMenu calendarMenu=new JMenu("Settings");
         menuBar.add(calendarMenu);
         calendarFrame.setJMenuBar(menuBar);
     }

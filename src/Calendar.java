@@ -10,20 +10,23 @@ import java.util.logging.Logger;
 
 public class Calendar {
 
-    private boolean isFirstSelection=true;
     private JPanel previousTile;
-    LocalDate date=LocalDate.of(2019, Month.APRIL, 22);
-    DayOfWeek firstDayOfTheWeek=DayOfWeek.SUNDAY;
+    private LocalDate date;
+    private DayOfWeek firstDayOfTheWeek;
+    private JFrame calendarFrame;
 
     public Calendar() {
-        JFrame frame=new JFrame();
-        frame.getContentPane().setLayout(new BorderLayout());
-        frame.add(createCenterPanel(), BorderLayout.CENTER);
-        frame.add(createTopPanel(), BorderLayout.NORTH);
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        calendarFrame=new JFrame();
+        firstDayOfTheWeek=DayOfWeek.MONDAY;
+        date=LocalDate.now();
+        calendarFrame.getContentPane().setLayout(new BorderLayout());
+        calendarFrame.add(createCenterPanel(), BorderLayout.CENTER);
+        calendarFrame.add(createTopPanel(), BorderLayout.NORTH);
+        //createMenuBar();
+        calendarFrame.pack();
+        calendarFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        calendarFrame.setLocationRelativeTo(null);
+        calendarFrame.setVisible(true);
     }
 
 
@@ -100,8 +103,9 @@ public class Calendar {
                 //Logger.getGlobal().info("" + calendar.get(Calendar.MONTH));
                 Tile tile = new Tile(dayNumber);
                 // Today's tile should have a red border.
-                if(!isPrevMonth && !isNextMonth && tile.getDayNumber()==date.getDayOfWeek().getValue()){
+                if(!isPrevMonth && !isNextMonth && tile.getDayNumber()==date.getDayOfMonth()){
                     tile.setBorder(BorderFactory.createLineBorder(Color.RED));
+                    previousTile=tile;
                 }
                 else{
                     tile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -111,15 +115,9 @@ public class Calendar {
                     public void mouseClicked(MouseEvent me){
                         JPanel tile=(JPanel)me.getSource();
                         tile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                        if(!isFirstSelection){
 
-                            previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                            previousTile=tile;
-                        }
-                        else if(isFirstSelection){
-                            previousTile=tile;
-                            isFirstSelection=false;
-                        }
+                        previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                        previousTile=tile;
                     }
                 });
                 centerPanel.add(tile);
@@ -165,6 +163,23 @@ public class Calendar {
         return panel;
     }
 
+    private void createMenuBar(){
+        JMenuBar menuBar=new JMenuBar();
+        calendarFrame.add(menuBar);
+        JMenu calendarMenu=new JMenu("Calendar");
+
+
+
+    }
+
+    /**
+     * This method determines the number of weeks in a specific month (should perhaps be in a different Utils Class.
+     * @param yearMonth a specific year-month combination. Since sometimes a month has a different number of days depending
+     * on which year it is the parameter can not just be a month.
+     * @param firstDayOfWeek the desired first day of the week. The number of weeks in a month is dependent on the first
+     * day of the week.
+     * @return the number of days in the week.
+     */
     private int getNrOfWeeksInMonth(YearMonth yearMonth, DayOfWeek firstDayOfWeek){
         int nrOfWeeksInMonth=0;
 
@@ -205,7 +220,8 @@ public class Calendar {
 
     /**
      * This methods returns the number of days between the value of the first day of the week and the week value of the first day of the month.
-     * @param firstDayOfWeek the preferred first day of the week, prevMonthLastDayOfMonthWeekValue the day-of-the-week value
+     * @param firstDayOfWeek the preferred first day of the week.
+     * @param prevMonthLastDayOfMonthValue the week value of the last day of the previous month.
      * of the previous month.
      * @return the difference in days.
      */

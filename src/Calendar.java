@@ -22,7 +22,7 @@ public class Calendar {
         calendarFrame.getContentPane().setLayout(new BorderLayout());
         calendarFrame.add(createCenterPanel(), BorderLayout.CENTER);
         calendarFrame.add(createTopPanel(), BorderLayout.NORTH);
-        //createMenuBar();
+        createMenuBar();
         calendarFrame.pack();
         calendarFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         calendarFrame.setLocationRelativeTo(null);
@@ -70,18 +70,14 @@ public class Calendar {
         }
 
         int rows =getNrOfWeeksInMonth(YearMonth.of(date.getYear(), date.getMonth()), firstDayOfTheWeek);
-        //Logger.getGlobal().info("Rows: " + rows);
         int columns=7; // 7 days in a week. One week per row.
         JPanel centerPanel=new JPanel(new GridLayout(rows, columns));
 
         int nrOfDaysInCurrentMonth=date.lengthOfMonth(); //date.getMonth().maxLength();
-        //Logger.getGlobal().info("Number of days in month: " + nrOfDaysInCurrentMonth);
 
         int firstDayOfMonthWeekValue=date.withDayOfMonth(1).getDayOfWeek().getValue();
-        Logger.getGlobal().info("First day of the month week value: " + firstDayOfMonthWeekValue);
 
         int prevMonthNrOfDays=YearMonth.of(date.getYear(), getPreviousMonth(date.getMonthValue())).lengthOfMonth();
-        Logger.getGlobal().info("Previous month number of days: " + prevMonthNrOfDays);
 
         int prevMonthLastDayOfMonthWeekValue=LocalDate.of(date.getYear(), getPreviousMonth(date.getMonthValue()), prevMonthNrOfDays).getDayOfWeek().getValue();
 
@@ -95,14 +91,10 @@ public class Calendar {
             dayNumber=prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
             isPrevMonth=true;
         }
-        //int dayNumber=firstDayOfMonthWeekValue==firstDayOfTheWeek.getValue()?1:prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
-        Logger.getGlobal().info("dayNumber: " + dayNumber);
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
-                //Logger.getGlobal().info("" + calendar.get(Calendar.MONTH));
                 Tile tile = new Tile(dayNumber);
-                // Today's tile should have a red border.
                 if(!isPrevMonth && !isNextMonth && tile.getDayNumber()==date.getDayOfMonth()){
                     tile.setBorder(BorderFactory.createLineBorder(Color.RED));
                     previousTile=tile;
@@ -115,7 +107,6 @@ public class Calendar {
                     public void mouseClicked(MouseEvent me){
                         JPanel tile=(JPanel)me.getSource();
                         tile.setBorder(BorderFactory.createLineBorder(Color.RED));
-
                         previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                         previousTile=tile;
                     }
@@ -165,11 +156,9 @@ public class Calendar {
 
     private void createMenuBar(){
         JMenuBar menuBar=new JMenuBar();
-        calendarFrame.add(menuBar);
         JMenu calendarMenu=new JMenu("Calendar");
-
-
-
+        menuBar.add(calendarMenu);
+        calendarFrame.setJMenuBar(menuBar);
     }
 
     /**

@@ -107,7 +107,9 @@ public class Calendar {
                     public void mouseClicked(MouseEvent me){
                         JPanel tile=(JPanel)me.getSource();
                         tile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                        previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                        if(tile!=previousTile){
+                            previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                        }
                         previousTile=tile;
                     }
                 });
@@ -142,11 +144,12 @@ public class Calendar {
         if(firstDayOfTheWeek==DayOfWeek.MONDAY) {
 
             while(nrOfIterations<daysOfTheWeek.length){
-                //bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeek]));
+                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeekIndex]));
                 nrOfIterations++;
-
+                dayOfTheWeekIndex++;
             }
-            /*bottomPanel.add(new JLabel("Monday", SwingConstants.CENTER));
+
+            /*bottomPanel.add(new JLabel("Monday", SwingConstants.CENTER)); -- Code is not DRY!
             bottomPanel.add(new JLabel("Tuesday", SwingConstants.CENTER));
             bottomPanel.add(new JLabel("Wednesday", SwingConstants.CENTER));
             bottomPanel.add(new JLabel("Thursday", SwingConstants.CENTER));
@@ -158,15 +161,16 @@ public class Calendar {
 
             while(nrOfIterations<daysOfTheWeek.length){
                 bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeekIndex]));
-                if(dayOfTheWeekIndex==DayOfWeek.SUNDAY.getValue()-1){
-                       dayOfTheWeekIndex=0;
-                       nrOfIterations++;
-                       continue;
+                if(dayOfTheWeekIndex==DayOfWeek.SUNDAY.getValue()-1) {
+                    dayOfTheWeekIndex=0;
+                    nrOfIterations++;
+                    continue;
                 }
                 nrOfIterations++;
                 dayOfTheWeekIndex++;
             }
-            /*bottomPanel.add(new JLabel("Sunday", SwingConstants.CENTER));
+
+            /*bottomPanel.add(new JLabel("Sunday", SwingConstants.CENTER)); N-- Code is not DRY!
             bottomPanel.add(new JLabel("Monday", SwingConstants.CENTER));
             bottomPanel.add(new JLabel("Tuesday", SwingConstants.CENTER));
             bottomPanel.add(new JLabel("Wednesday", SwingConstants.CENTER));
@@ -174,6 +178,7 @@ public class Calendar {
             bottomPanel.add(new JLabel("Friday", SwingConstants.CENTER));
             bottomPanel.add(new JLabel("Saturday", SwingConstants.CENTER));*/
         }
+
         //northPanel.add(topPanel);
         //northPanel.add(bottomPanel);
         return bottomPanel;
@@ -187,7 +192,7 @@ public class Calendar {
     }
 
     /**
-     * This method determines the number of weeks in a specific month (should perhaps be in a different Utils Class.
+     * This method determines the number of weeks in a specific month (should perhaps be in a different class, maybe a Utils Class).
      * @param yearMonth a specific year-month combination. Since sometimes a month has a different number of days depending
      * on which year it is the parameter can not just be a month.
      * @param firstDayOfWeek the desired first day of the week. The number of weeks in a month is dependent on the first
@@ -240,7 +245,6 @@ public class Calendar {
      * @return the difference in days.
      */
     private int getDifferenceInDays(int firstDayOfWeek, int prevMonthLastDayOfMonthValue){
-        Logger.getGlobal().info("First day of the week value: " + firstDayOfTheWeek.getValue());
         int nrOfDays=0;
         while(!(firstDayOfWeek==prevMonthLastDayOfMonthValue)){
             if (firstDayOfWeek== DayOfWeek.SUNDAY.getValue()) {
@@ -249,11 +253,14 @@ public class Calendar {
             nrOfDays++;
             firstDayOfWeek++;
         }
-
-        Logger.getGlobal().info("Difference in days: " + nrOfDays);
         return nrOfDays;
     }
 
+    /**
+     * This method returns an int value for previous month.
+     * @param monthValue an integer value for the current month.
+     * @return
+     */
     private int getPreviousMonth(int monthValue){
         int previousMonth=0;
         if(monthValue==1){

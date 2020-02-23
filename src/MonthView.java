@@ -1,6 +1,8 @@
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
@@ -9,17 +11,18 @@ import java.time.*;
 
 public class MonthView extends CalendarView{
 
-    private final JPanel centerPanel;
     private Tile previousTile;
-    private final DayOfWeek firstDayOfTheWeek;
+    private final DayOfWeek firstDayOfTheWeek; // Should this field perhaps be in super class?
+    private MonthGrid grid;
 
     public MonthView(LocalDate date, DayOfWeek preferredFirstDayOfTheWeek){
-        super(date);
+        super(date, preferredFirstDayOfTheWeek);
         this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
+        this.grid=new MonthGrid();
         this.setLayout(new BorderLayout());
-        centerPanel=createCenterPanel();
+
         this.add(createNorthPanel(), BorderLayout.NORTH);
-        this.add(centerPanel, BorderLayout.CENTER);
+        this.add(grid, BorderLayout.CENTER);
     }
 
     class Tile extends JPanel{
@@ -45,6 +48,80 @@ public class MonthView extends CalendarView{
         }
     }
 
+    class MonthGrid extends JPanel{
+
+
+        private MonthGrid() {
+            this.createGrid();
+        }
+
+        private void createGrid(){
+
+            int nrOfDaysInWeek=7;
+            int nrOfWeeksInMonth = getNrOfWeeksInMonth(YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth()), firstDayOfTheWeek);
+            this.setLayout(new GridLayout(nrOfWeeksInMonth, nrOfDaysInWeek));
+
+
+            int prevMonthNrOfDays=MonthView.this.getDate().minusMonths(1).lengthOfMonth();
+            //int prevMonthNrOfDays=YearMonth.of(MonthView.this.getDate().getYear(), getPreviousMonth(MonthView.this.getDate().getMonthValue())).lengthOfMonth();
+            int firstDayOfMonthWeekValue=getDate().withDayOfMonth(1).getDayOfWeek().getValue();
+            int nrOfDaysInCurrentMonth=getDate().lengthOfMonth();
+
+            int prevMonthLastDayOfMonthWeekValue=MonthView.this.getDate().minusMonths(1).getDayOfWeek().getValue();
+            //int prevMonthLastDayOfMonthWeekValue=LocalDate.of(getDate().getYear(), getPreviousMonth(getDate().getMonthValue()), prevMonthNrOfDays).getDayOfWeek().getValue();
+
+            int aDayNumber;
+
+            boolean isCurrentMonth;
+
+            if(firstDayOfMonthWeekValue==firstDayOfTheWeek.getValue()){
+                aDayNumber=1;
+                isCurrentMonth=true;
+            }
+            else{
+                aDayNumber=prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
+                isCurrentMonth=false;
+            }
+            for(int i = 0; i<nrOfWeeksInMonth; i++) {
+                for (int j = 0; j<nrOfDaysInWeek; j++) {
+                    Tile tile = new Tile(aDayNumber);
+                    if (isCurrentMonth && aDayNumber == getDate().getDayOfMonth()) {
+                        tile.setBorder(BorderFactory.createLineBorder(Color.RED));
+                        previousTile = tile;
+                    } else {
+                        tile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                    }
+                    tile.addMouseListener(new MouseAdapter() {
+
+                        public void mouseClicked(MouseEvent me) {
+                            Tile clickedTile = (Tile) me.getSource();
+                            if (clickedTile != previousTile) {
+                                clickedTile.setBorder(BorderFactory.createLineBorder(Color.RED));
+                                previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                                previousTile = clickedTile;
+                            }
+
+                        }
+                    });
+                    this.add(tile);
+                    aDayNumber++;
+
+                    if (!isCurrentMonth && aDayNumber > prevMonthNrOfDays) {
+                        aDayNumber = 1;
+                        isCurrentMonth = true;
+                    } else if (isCurrentMonth && aDayNumber > nrOfDaysInCurrentMonth) {
+                        aDayNumber = 1;
+                        isCurrentMonth = false;
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
     private JPanel createNorthPanel(){
 
         String[] daysOfTheWeek={"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
@@ -53,18 +130,39 @@ public class MonthView extends CalendarView{
         northPanel.setBorder(BorderFactory.createEtchedBorder());
 
         JPanel topPanel=new JPanel();
-        BoxLayout boxLayout=new BoxLayout(topPanel, BoxLayout.X_AXIS);
-        topPanel.setLayout(boxLayout);
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
 
-        topPanel.add(Box.createHorizontalStrut(centerPanel.getPreferredSize().width/7));
-        topPanel.add(new BasicArrowButton(BasicArrowButton.WEST));
-        topPanel.add(Box.createHorizontalStrut(centerPanel.getPreferredSize().width/7/2));
-        JLabel monthLabel=new JLabel(String.format("%s %s", date.getMonth().toString(), date.getYear()), SwingConstants.CENTER);
+        BasicArrowButton previousMonthArrowButton=new BasicArrowButton(BasicArrowButton.WEST);
+        BasicArrowButton nextMonthArrowButton=new BasicArrowButton(BasicArrowButton.EAST);
+        nextMonthArrowButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                //super.mouseClicked(e); // Why does this auto generated stub contain a call to super class mouseClicked(MouseEvent e)?
+                String obj=getClass().toString();
+                System.out.println(obj);
+            }
+        });
+        previousMonthArrowButton.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent event){
+                MonthView.this.setDate(MonthView.this.getDate().minusMonths(1));
+                MonthView.this.remove(grid);
+                grid=new MonthGrid();
+                MonthView.this.add(grid, BorderLayout.CENTER);
+                MonthView.this.revalidate();
+
+
+            }
+        });
+
+        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7));
+        topPanel.add(previousMonthArrowButton);
+        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7/2));
+        JLabel monthLabel=new JLabel(String.format("%s %s", getDate().getMonth().toString(), getDate().getYear()), SwingConstants.CENTER);
 
         topPanel.add(monthLabel);
-        topPanel.add(Box.createHorizontalStrut(centerPanel.getPreferredSize().width/7/2));
-        topPanel.add(new BasicArrowButton(BasicArrowButton.EAST));
-        topPanel.add(Box.createHorizontalStrut(centerPanel.getPreferredSize().width/7));
+        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7/2));
+        topPanel.add(nextMonthArrowButton);
+        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7));
 
         JPanel bottomPanel=new JPanel(new GridLayout(1, 7));
 
@@ -96,70 +194,6 @@ public class MonthView extends CalendarView{
         northPanel.add(topPanel);
         northPanel.add(bottomPanel);
         return northPanel;
-    }
-
-
-    private JPanel createCenterPanel(){
-
-        final int NUMBER_OF_DAYS_IN_WEEK=7;
-
-        int rows=getNrOfWeeksInMonth(YearMonth.of(date.getYear(), date.getMonth()), firstDayOfTheWeek);
-        JPanel centerPanel=new JPanel(new GridLayout(rows, NUMBER_OF_DAYS_IN_WEEK));
-
-        int nrOfDaysInCurrentMonth=date.lengthOfMonth();
-
-        int firstDayOfMonthWeekValue=date.withDayOfMonth(1).getDayOfWeek().getValue();
-
-        int prevMonthNrOfDays=YearMonth.of(date.getYear(), getPreviousMonth(date.getMonthValue())).lengthOfMonth();
-
-        int prevMonthLastDayOfMonthWeekValue=LocalDate.of(date.getYear(), getPreviousMonth(date.getMonthValue()), prevMonthNrOfDays).getDayOfWeek().getValue();
-
-        int aDayNumber;
-        Boolean isCurrentMonth;
-
-        if(firstDayOfMonthWeekValue==firstDayOfTheWeek.getValue()){
-            aDayNumber=1;
-            isCurrentMonth=true;
-        }
-        else{
-            aDayNumber=prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
-            isCurrentMonth=false;
-        }
-        for(int i = 0; i<rows; i++) {
-            for (int j = 0; j<NUMBER_OF_DAYS_IN_WEEK; j++) {
-                Tile tile = new Tile(aDayNumber);
-
-                if (isCurrentMonth && aDayNumber == date.getDayOfMonth()) {
-                    tile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                    previousTile = tile;
-                } else {
-                    tile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                }
-                tile.addMouseListener(new MouseAdapter() {
-
-                    public void mouseClicked(MouseEvent me) {
-                        Tile clickedTile = (Tile) me.getSource();
-                        if (clickedTile != previousTile) {
-                            clickedTile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                            previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                            previousTile = clickedTile;
-                        }
-
-                    }
-                });
-                centerPanel.add(tile);
-                aDayNumber++;
-
-                if (!isCurrentMonth && aDayNumber > prevMonthNrOfDays) {
-                    aDayNumber = 1;
-                    isCurrentMonth = true;
-                } else if (isCurrentMonth && aDayNumber > nrOfDaysInCurrentMonth) {
-                    aDayNumber = 1;
-                    isCurrentMonth = false;
-                }
-            }
-        }
-        return centerPanel;
     }
 
     /**

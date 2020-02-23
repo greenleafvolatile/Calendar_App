@@ -3,34 +3,29 @@ import java.awt.*;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 
-public class Calendar {
+public class Calendar extends JFrame {
 
     private DayOfWeek preferredFirstDayOfTheWeek;
-    private final JFrame calendarFrame;
+    private CalendarView view;
 
     private Calendar() {
-        calendarFrame=new JFrame();
         LocalDate date = LocalDate.now();
         preferredFirstDayOfTheWeek=DayOfWeek.MONDAY;
-        CalendarView monthView = new MonthView(date, preferredFirstDayOfTheWeek);
-        calendarFrame.getContentPane().setLayout(new BorderLayout());
-        calendarFrame.add(new MonthView(date, preferredFirstDayOfTheWeek), BorderLayout.CENTER);
-        createMenuBar();
-        calendarFrame.pack();
-        calendarFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        calendarFrame.setLocationRelativeTo(null);
-        calendarFrame.setVisible(true);
+        view= new MonthView(date, preferredFirstDayOfTheWeek);
+        this.getContentPane().setLayout(new BorderLayout());
+        this.add(new MonthView(date, preferredFirstDayOfTheWeek), BorderLayout.CENTER);
+        this.addMenuBar();
+        this.pack();
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setLocationRelativeTo(null);
+        this.setVisible(true);
     }
 
-    private void createMenuBar(){
+    private void addMenuBar(){
         JMenuBar menuBar=new JMenuBar();
         JMenu calendarMenu=new JMenu("Settings");
         menuBar.add(calendarMenu);
-        calendarFrame.setJMenuBar(menuBar);
-    }
-
-    public void setPreferredFirstDayOfTheWeek(DayOfWeek thePrefferedDayOfTheWeek){
-        this.preferredFirstDayOfTheWeek=thePrefferedDayOfTheWeek;
+        this.setJMenuBar(menuBar);
     }
 
     public static void main (String[]args){

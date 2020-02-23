@@ -1,14 +1,15 @@
 import javax.swing.*;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 
 public abstract class CalendarView extends JPanel {
 
+    private LocalDate date;
+    private DayOfWeek firstDayOfTheWeek;
 
-
-    protected LocalDate date;
-
-    protected CalendarView(LocalDate aDate){
+    protected CalendarView(LocalDate aDate, DayOfWeek preferredFirstDayOfTheWeek){
         this.date=aDate;
+        this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
     }
 
     protected void setDate(LocalDate aDate){
@@ -19,4 +20,11 @@ public abstract class CalendarView extends JPanel {
         return this.date;
     }
 
+    protected DayOfWeek getFirstDayOfTheWeek(){
+        return this.firstDayOfTheWeek;
+    }
+
+    protected void setFirstDayOfTheWeek(DayOfWeek preferredFirstDayOfTheWeek){
+        this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
+    }
 }

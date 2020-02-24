@@ -5,17 +5,17 @@ import java.time.LocalDate;
 
 public class Calendar extends JFrame {
 
-    private DayOfWeek preferredFirstDayOfTheWeek;
-    private CalendarView view;
 
     private Calendar() {
-        LocalDate date = LocalDate.now();
-        preferredFirstDayOfTheWeek=DayOfWeek.MONDAY;
-        view= new MonthView(date, preferredFirstDayOfTheWeek);
+        LocalDate currentDate = LocalDate.now();
+        DayOfWeek preferredFirstDayOfTheWeek=DayOfWeek.MONDAY;
+
         this.getContentPane().setLayout(new BorderLayout());
-        this.add(new MonthView(date, preferredFirstDayOfTheWeek), BorderLayout.CENTER);
+
+        this.add(new MonthView(currentDate, preferredFirstDayOfTheWeek), BorderLayout.CENTER);
         this.addMenuBar();
         this.pack();
+
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setVisible(true);

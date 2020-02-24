@@ -12,17 +12,17 @@ import java.time.*;
 public class MonthView extends CalendarView{
 
     private Tile previousTile;
-    private final DayOfWeek firstDayOfTheWeek; // Should this field perhaps be in super class?
-    private MonthGrid grid;
+    private DaysOfTheMonthGrid MonthGrid;
+    private DayOfWeek firstDayOfTheWeek;
+    private Month currentMonth;
 
-    public MonthView(LocalDate date, DayOfWeek preferredFirstDayOfTheWeek){
+    protected MonthView(LocalDate date, DayOfWeek preferredFirstDayOfTheWeek){
         super(date, preferredFirstDayOfTheWeek);
         this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
-        this.grid=new MonthGrid();
+        this.MonthGrid=new DaysOfTheMonthGrid();
         this.setLayout(new BorderLayout());
-
         this.add(createNorthPanel(), BorderLayout.NORTH);
-        this.add(grid, BorderLayout.CENTER);
+        this.add(MonthGrid, BorderLayout.CENTER);
     }
 
     class Tile extends JPanel{
@@ -33,7 +33,6 @@ public class MonthView extends CalendarView{
             this.dayNumber=aDayNumber;
         }
 
-
         @Override
         public void paintComponent(Graphics g){
             super.paintComponent(g);
@@ -43,32 +42,34 @@ public class MonthView extends CalendarView{
         }
 
         @Override
-        public Dimension getPreferredSize(){
+        public Dimension getPreferredSize(){ // Perhaps it shouldn't be the tiles that determine the size of the app. Perhaps the tiles should be made to fit into a frame of a certain size.
             return new Dimension(100, 100);
         }
     }
 
-    class MonthGrid extends JPanel{
+    /**
+     * Placeholder.
+     */
+    private class DaysOfTheMonthGrid extends JPanel{
 
 
-        private MonthGrid() {
+        private DaysOfTheMonthGrid() {
             this.createGrid();
         }
 
         private void createGrid(){
 
-            int nrOfDaysInWeek=7;
-            int nrOfWeeksInMonth = getNrOfWeeksInMonth(YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth()), firstDayOfTheWeek);
+            final int nrOfDaysInWeek=7;
+            final int nrOfWeeksInMonth = getNrOfWeeksInMonth(YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth()), firstDayOfTheWeek);
+
             this.setLayout(new GridLayout(nrOfWeeksInMonth, nrOfDaysInWeek));
 
 
-            int prevMonthNrOfDays=MonthView.this.getDate().minusMonths(1).lengthOfMonth();
-            //int prevMonthNrOfDays=YearMonth.of(MonthView.this.getDate().getYear(), getPreviousMonth(MonthView.this.getDate().getMonthValue())).lengthOfMonth();
-            int firstDayOfMonthWeekValue=getDate().withDayOfMonth(1).getDayOfWeek().getValue();
-            int nrOfDaysInCurrentMonth=getDate().lengthOfMonth();
+            final int prevMonthNrOfDays=MonthView.this.getDate().minusMonths(1).lengthOfMonth();
+            final int firstDayOfMonthWeekValue=getDate().withDayOfMonth(1).getDayOfWeek().getValue();
+            final int nrOfDaysInCurrentMonth=getDate().lengthOfMonth();
 
-            int prevMonthLastDayOfMonthWeekValue=MonthView.this.getDate().minusMonths(1).getDayOfWeek().getValue();
-            //int prevMonthLastDayOfMonthWeekValue=LocalDate.of(getDate().getYear(), getPreviousMonth(getDate().getMonthValue()), prevMonthNrOfDays).getDayOfWeek().getValue();
+            final int prevMonthLastDayOfMonthWeekValue=MonthView.this.getDate().minusMonths(1).getDayOfWeek().getValue();
 
             int aDayNumber;
 
@@ -84,15 +85,17 @@ public class MonthView extends CalendarView{
             }
             for(int i = 0; i<nrOfWeeksInMonth; i++) {
                 for (int j = 0; j<nrOfDaysInWeek; j++) {
+
                     Tile tile = new Tile(aDayNumber);
+
                     if (isCurrentMonth && aDayNumber == getDate().getDayOfMonth()) {
                         tile.setBorder(BorderFactory.createLineBorder(Color.RED));
                         previousTile = tile;
                     } else {
                         tile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     }
-                    tile.addMouseListener(new MouseAdapter() {
 
+                    tile.addMouseListener(new MouseAdapter() {
                         public void mouseClicked(MouseEvent me) {
                             Tile clickedTile = (Tile) me.getSource();
                             if (clickedTile != previousTile) {
@@ -100,7 +103,6 @@ public class MonthView extends CalendarView{
                                 previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                                 previousTile = clickedTile;
                             }
-
                         }
                     });
                     this.add(tile);
@@ -116,15 +118,76 @@ public class MonthView extends CalendarView{
                 }
             }
         }
+
+        /**
+         * Counts the first few days of the month before reaching the desired starting day, then counts how many
+         * full weeks there are, then adds 1 more week for any remaining days (should perhaps be in a different class, maybe a Utils Class).
+         * @param yearMonth a specific year-month combination. Since sometimes a month has a different number of days depending
+         * on which year it is the parameter can not just be a month.
+         * @param firstDayOfWeek the desired first day of the week. The number of weeks in a month is dependent on the first
+         * day of the week.
+         * @return the number of days in the week.
+         */
+        private int getNrOfWeeksInMonth(YearMonth yearMonth, DayOfWeek firstDayOfWeek){
+            int nrOfWeeksInMonth=0;
+
+            // Provide an integer value for the last day of the week.
+            int lastDayOfWeek=firstDayOfWeek.getValue()-1==0?7:firstDayOfWeek.getValue()-1;
+
+            // Determine whether the first day of the month is a monday or a tuesday or etc..
+            int firstWeekDayOfMonth=yearMonth.atDay(1).getDayOfWeek().getValue();
+
+            // Determine how many days the month has.
+            int nrOfDaysInCurrentMonth=yearMonth.lengthOfMonth();
+
+            // If the first day of the month is not also the preferred first day of the week, determine how many days are in
+            // the first week.
+            if (firstWeekDayOfMonth != firstDayOfWeek.getValue()) {
+                int nrOfDaysInFirstWeek=1;
+                while(!(firstWeekDayOfMonth==lastDayOfWeek)){
+                    if(firstWeekDayOfMonth==DayOfWeek.SUNDAY.getValue()){
+                        firstWeekDayOfMonth=0;
+                    }
+                    firstWeekDayOfMonth++;
+                    nrOfDaysInFirstWeek++;
+                }
+                // Subtract the number of days in the first week from the total number of days in the month.
+                nrOfDaysInCurrentMonth-=nrOfDaysInFirstWeek;
+                // Increase the number of weeks in the month by one.
+                nrOfWeeksInMonth++;
+            }
+            // Divide the remaining days in the month by 7 to get the number weeks left in the month. Add 1 week if there is a remainder.
+            nrOfWeeksInMonth+=nrOfDaysInCurrentMonth%7==0?nrOfDaysInCurrentMonth/7:nrOfDaysInCurrentMonth/7+1;
+
+            return nrOfWeeksInMonth;
+        }
+
+        /**
+         * This methods returns the number of days between the value of the first day of the week of the previous moth and the week value of the first day of the current month.
+         * @param firstDayOfWeek the preferred first day of the week.
+         * @param prevMonthLastDayOfMonthValue the week value of the last day of the previous month.
+         * of the previous month.
+         * @return the difference in days.
+         */
+        private int getDifferenceInDays(int firstDayOfWeek, int prevMonthLastDayOfMonthValue){
+            int nrOfDays=0;
+            while(!(firstDayOfWeek==prevMonthLastDayOfMonthValue)){
+                if (firstDayOfWeek== DayOfWeek.SUNDAY.getValue()) {
+                    firstDayOfWeek=0;
+                }
+                nrOfDays++;
+                firstDayOfWeek++;
+            }
+            return nrOfDays;
+        }
+
     }
-
-
-
-
 
     private JPanel createNorthPanel(){
 
         String[] daysOfTheWeek={"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+
+        JLabel monthLabel=new JLabel(String.format("%s %s", getDate().getMonth().toString(), getDate().getYear()), SwingConstants.CENTER);
 
         JPanel northPanel=new JPanel(new GridLayout(2, 1));
         northPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -134,35 +197,35 @@ public class MonthView extends CalendarView{
 
         BasicArrowButton previousMonthArrowButton=new BasicArrowButton(BasicArrowButton.WEST);
         BasicArrowButton nextMonthArrowButton=new BasicArrowButton(BasicArrowButton.EAST);
-        nextMonthArrowButton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                //super.mouseClicked(e); // Why does this auto generated stub contain a call to super class mouseClicked(MouseEvent e)?
-                String obj=getClass().toString();
-                System.out.println(obj);
+
+        nextMonthArrowButton.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent event){
+                MonthView.this.setDate(MonthView.this.getDate().plusMonths(1));
+                setNewGrid();
+                setNewLabel(monthLabel);
             }
         });
+
         previousMonthArrowButton.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent event){
                 MonthView.this.setDate(MonthView.this.getDate().minusMonths(1));
-                MonthView.this.remove(grid);
-                grid=new MonthGrid();
-                MonthView.this.add(grid, BorderLayout.CENTER);
-                MonthView.this.revalidate();
+                setNewGrid();
+                setNewLabel(monthLabel);
 
 
             }
         });
 
-        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7));
+
+
+        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7));
         topPanel.add(previousMonthArrowButton);
-        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7/2));
-        JLabel monthLabel=new JLabel(String.format("%s %s", getDate().getMonth().toString(), getDate().getYear()), SwingConstants.CENTER);
+        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7/2));
 
         topPanel.add(monthLabel);
-        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7/2));
+        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7/2));
         topPanel.add(nextMonthArrowButton);
-        topPanel.add(Box.createHorizontalStrut(grid.getPreferredSize().width/7));
+        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7));
 
         JPanel bottomPanel=new JPanel(new GridLayout(1, 7));
 
@@ -196,82 +259,16 @@ public class MonthView extends CalendarView{
         return northPanel;
     }
 
-    /**
-     * Counts the first few days of the month before reaching the desired starting day, then counts how many
-     * full weeks there are, then adds 1 more week for any remaining days (should perhaps be in a different class, maybe a Utils Class).
-     * @param yearMonth a specific year-month combination. Since sometimes a month has a different number of days depending
-     * on which year it is the parameter can not just be a month.
-     * @param firstDayOfWeek the desired first day of the week. The number of weeks in a month is dependent on the first
-     * day of the week.
-     * @return the number of days in the week.
-     */
-    private int getNrOfWeeksInMonth(YearMonth yearMonth, DayOfWeek firstDayOfWeek){
-        int nrOfWeeksInMonth=0;
-
-        // Provide an integer value for the last day of the week.
-        int lastDayOfWeek=firstDayOfWeek.getValue()-1==0?7:firstDayOfWeek.getValue()-1;
-
-        // Determine whether the first day of the month is a monday or a tuesday or etc..
-        int firstWeekDayOfMonth=yearMonth.atDay(1).getDayOfWeek().getValue();
-
-        // Determine how many days the month has.
-        int nrOfDaysInCurrentMonth=yearMonth.lengthOfMonth();
-
-        // If the first day of the month is not also the preferred first day of the week, determine how many days are in
-        // the first week.
-        if (firstWeekDayOfMonth != firstDayOfWeek.getValue()) {
-            int nrOfDaysInFirstWeek=1;
-            while(!(firstWeekDayOfMonth==lastDayOfWeek)){
-                if(firstWeekDayOfMonth==DayOfWeek.SUNDAY.getValue()){
-                    firstWeekDayOfMonth=0;
-                }
-                firstWeekDayOfMonth++;
-                nrOfDaysInFirstWeek++;
-            }
-            // Subtract the number of days in the first week from the total number of days in the month.
-            nrOfDaysInCurrentMonth-=nrOfDaysInFirstWeek;
-            // Increase the number of weeks in the month by one.
-            nrOfWeeksInMonth++;
-        }
-        // Divide the remaining days in the month by 7 to get the number weeks left in the month. Add 1 week if there is a remainder.
-        nrOfWeeksInMonth+=nrOfDaysInCurrentMonth%7==0?nrOfDaysInCurrentMonth/7:nrOfDaysInCurrentMonth/7+1;
-
-        return nrOfWeeksInMonth;
+    private void setNewGrid(){
+        MonthView.this.remove(MonthGrid);
+        MonthGrid=new DaysOfTheMonthGrid();
+        MonthView.this.add(MonthGrid, BorderLayout.CENTER);
+        MonthView.this.revalidate();
     }
 
-    /**
-     * This method returns an int value for previous month.
-     * @param monthValue an integer value for the current month.
-     * @return an integer value for the previous month.
-     */
-    private int getPreviousMonth(int monthValue){
-        int previousMonth;
-        if(monthValue==1){
-            previousMonth=12;
-        }
-        else{
-            previousMonth=monthValue-1;
-        }
-        return previousMonth;
-    }
-
-    /**
-     * This methods returns the number of days between the value of the first day of the week of the previous moth and the week value of the first day of the current month.
-     * @param firstDayOfWeek the preferred first day of the week.
-     * @param prevMonthLastDayOfMonthValue the week value of the last day of the previous month.
-     * of the previous month.
-     * @return the difference in days.
-     */
-    private int getDifferenceInDays(int firstDayOfWeek, int prevMonthLastDayOfMonthValue){
-        int nrOfDays=0;
-        while(!(firstDayOfWeek==prevMonthLastDayOfMonthValue)){
-            if (firstDayOfWeek== DayOfWeek.SUNDAY.getValue()) {
-                firstDayOfWeek=0;
-            }
-            nrOfDays++;
-            firstDayOfWeek++;
-        }
-        return nrOfDays;
+    private void setNewLabel(JLabel monthLabel){
+        monthLabel.setText(String.format("%s %s", getDate().getMonth().toString(), getDate().getYear()));
+        monthLabel.setHorizontalAlignment(SwingConstants.CENTER);
     }
 
 }

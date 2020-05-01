@@ -1,35 +1,35 @@
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.time.*;
 
 
 public class MonthView extends CalendarView{
 
-    private Tile previousTile;
-    private DaysOfTheMonthGrid MonthGrid;
+    private DayTile tile;
+    private DayTile previousDayTile;
+    private DaysOfTheMonthGrid monthGrid;
+
     private DayOfWeek firstDayOfTheWeek;
-    private Month currentMonth;
 
     protected MonthView(LocalDate date, DayOfWeek preferredFirstDayOfTheWeek){
         super(date, preferredFirstDayOfTheWeek);
+
         this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
-        this.MonthGrid=new DaysOfTheMonthGrid();
+        this.monthGrid=new DaysOfTheMonthGrid();
         this.setLayout(new BorderLayout());
         this.add(createNorthPanel(), BorderLayout.NORTH);
-        this.add(MonthGrid, BorderLayout.CENTER);
+        this.add(monthGrid, BorderLayout.CENTER);
     }
 
-    class Tile extends JPanel{
+    class DayTile extends JPanel{
 
+        final Dimension INITIAL_DIMENSION=new Dimension(100, 100);
         private final int dayNumber;
 
-        Tile(int aDayNumber){
+        DayTile(int aDayNumber){
             this.dayNumber=aDayNumber;
         }
 
@@ -43,7 +43,11 @@ public class MonthView extends CalendarView{
 
         @Override
         public Dimension getPreferredSize(){ // Perhaps it shouldn't be the tiles that determine the size of the app. Perhaps the tiles should be made to fit into a frame of a certain size.
-            return new Dimension(100, 100);
+            return INITIAL_DIMENSION;
+        }
+
+        public Dimension getInitialDimension(){
+            return INITIAL_DIMENSION;
         }
     }
 
@@ -63,7 +67,6 @@ public class MonthView extends CalendarView{
             final int nrOfWeeksInMonth = getNrOfWeeksInMonth(YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth()), firstDayOfTheWeek);
 
             this.setLayout(new GridLayout(nrOfWeeksInMonth, nrOfDaysInWeek));
-
 
             final int prevMonthNrOfDays=MonthView.this.getDate().minusMonths(1).lengthOfMonth();
             final int firstDayOfMonthWeekValue=getDate().withDayOfMonth(1).getDayOfWeek().getValue();
@@ -86,22 +89,22 @@ public class MonthView extends CalendarView{
             for(int i = 0; i<nrOfWeeksInMonth; i++) {
                 for (int j = 0; j<nrOfDaysInWeek; j++) {
 
-                    Tile tile = new Tile(aDayNumber);
+                    tile = new DayTile(aDayNumber);
 
-                    if (isCurrentMonth && aDayNumber == getDate().getDayOfMonth()) {
+                    if (MonthView.this.getDate().getMonth()==Calendar.CURRENT_DATE.getMonth() && aDayNumber == getDate().getDayOfMonth()) {
                         tile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                        previousTile = tile;
+                        previousDayTile = tile;
                     } else {
                         tile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     }
 
                     tile.addMouseListener(new MouseAdapter() {
                         public void mouseClicked(MouseEvent me) {
-                            Tile clickedTile = (Tile) me.getSource();
-                            if (clickedTile != previousTile) {
-                                clickedTile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                                previousTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                                previousTile = clickedTile;
+                            DayTile clickedDayTile = (DayTile) me.getSource();
+                            if (clickedDayTile != previousDayTile) {
+                                clickedDayTile.setBorder(BorderFactory.createLineBorder(Color.RED));
+                                previousDayTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                                previousDayTile = clickedDayTile;
                             }
                         }
                     });
@@ -180,7 +183,6 @@ public class MonthView extends CalendarView{
             }
             return nrOfDays;
         }
-
     }
 
     private JPanel createNorthPanel(){
@@ -189,7 +191,7 @@ public class MonthView extends CalendarView{
 
         JLabel monthLabel=new JLabel(String.format("%s %s", getDate().getMonth().toString(), getDate().getYear()), SwingConstants.CENTER);
 
-        JPanel northPanel=new JPanel(new GridLayout(2, 1));
+        JPanel northPanel = new JPanel(new GridLayout(2, 1));
         northPanel.setBorder(BorderFactory.createEtchedBorder());
 
         JPanel topPanel=new JPanel();
@@ -216,16 +218,14 @@ public class MonthView extends CalendarView{
             }
         });
 
-
-
-        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7));
+        topPanel.add(Box.createHorizontalStrut(monthGrid.getPreferredSize().width/7));
         topPanel.add(previousMonthArrowButton);
-        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7/2));
+        topPanel.add(Box.createHorizontalStrut(monthGrid.getPreferredSize().width/7/2));
 
         topPanel.add(monthLabel);
-        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7/2));
+        topPanel.add(Box.createHorizontalStrut(monthGrid.getPreferredSize().width/7/2));
         topPanel.add(nextMonthArrowButton);
-        topPanel.add(Box.createHorizontalStrut(MonthGrid.getPreferredSize().width/7));
+        topPanel.add(Box.createHorizontalStrut(monthGrid.getPreferredSize().width/7));
 
         JPanel bottomPanel=new JPanel(new GridLayout(1, 7));
 
@@ -259,18 +259,28 @@ public class MonthView extends CalendarView{
         return northPanel;
     }
 
+    /**
+     * This method changes the month grid when the month is changed.
+     */
     private void setNewGrid(){
-        MonthView.this.remove(MonthGrid);
-        MonthGrid=new DaysOfTheMonthGrid();
-        MonthView.this.add(MonthGrid, BorderLayout.CENTER);
+        MonthView.this.remove(monthGrid);
+        monthGrid=new DaysOfTheMonthGrid();
+        MonthView.this.add(monthGrid, BorderLayout.CENTER);
         MonthView.this.revalidate();
     }
 
+    /**
+     * This method sets the month label when the month is changed.
+     * @param monthLabel a JLabel with a month name as text.
+     */
     private void setNewLabel(JLabel monthLabel){
         monthLabel.setText(String.format("%s %s", getDate().getMonth().toString(), getDate().getYear()));
         monthLabel.setHorizontalAlignment(SwingConstants.CENTER);
     }
 
+    protected DayTile getDayTile(){
+        return this.tile;
+    }
 }
 
 

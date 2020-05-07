@@ -1,3 +1,5 @@
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -13,22 +15,26 @@ class ButtonPanel extends JPanel {
     private Dimension buttonDimension;
 
 
-    public ButtonPanel(Dimension tileDimension){
+    public ButtonPanel(Dimension tileDimension, Container parent) {
 
-        class CustomButton extends JButton{
+        this.buttonDimension = tileDimension;
+        this.initGUI();
+    }
 
-            public CustomButton(String text){
-                super(text);
-            }
+    class CustomButton extends JButton{
 
-            @Override
-            public Dimension getPreferredSize(){
-                return buttonDimension;
-            }
+        public CustomButton(String text){
+                                       super(text);
+                                                   }
 
-        }
+        @Override
+        public Dimension getPreferredSize(){
+                                          return buttonDimension;
+                                                                 }
 
-        this.buttonDimension=tileDimension;
+    }
+
+    public void initGUI(){
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
@@ -45,15 +51,13 @@ class ButtonPanel extends JPanel {
         // Add a button to open a JOptionPane to add an event to the calendar.
         JButton addEventButton=new CustomButton("<html><center>New<br />Event</center</html>");
         addEventButton.setMnemonic('N');
-        addEventButton.addComponentListener(new ComponentAdapter(){
+        addEventButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent actionEvent){
+                //JOptionPane.showOptionDialog(parent
 
 
-
-
-            public void componentResized(ComponentEvent ce){
-                Logger.getGlobal().info(String.format("Button width: %d Button height: %d", addEventButton.getWidth(), addEventButton.getHeight()));
             }
-
 
         });
         gbc.anchor=GridBagConstraints.NORTH;
@@ -69,12 +73,12 @@ class ButtonPanel extends JPanel {
         // Add a button to exit the Calendar application.
         JButton exitButton=new CustomButton("Exit");
         exitButton.setMnemonic('E');
+        gbc.anchor=GridBagConstraints.SOUTH;
         gbc.gridx=0;
         gbc.gridy=1;
         gbc.weightx=0;
         gbc.weighty=1;
         gbc.insets=new Insets(0, 4, 4, 4);
-        //gbc.anchor=GridBagConstraints.NORTH;
         gbag.setConstraints(exitButton, gbc);
         panel.add(exitButton);
 

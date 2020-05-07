@@ -10,9 +10,9 @@ public abstract class CalendarView extends JPanel {
     private LocalDate date;
     private DayOfWeek firstDayOfTheWeek;
 
-    protected CalendarView(LocalDate aDate, DayOfWeek preferredFirstDayOfTheWeek){
+    protected CalendarView(LocalDate aDate, DayOfWeek aWeekDay){
         this.date=aDate;
-        this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
+        this.firstDayOfTheWeek=aWeekDay;
     }
 
     protected void setDate(LocalDate aDate){

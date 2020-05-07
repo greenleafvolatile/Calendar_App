@@ -1,3 +1,4 @@
+import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
@@ -9,25 +10,21 @@ import java.time.*;
 public class MonthView extends CalendarView{
 
     private DayTile tile;
-    private DayTile previousDayTile;
     private DaysOfTheMonthGrid monthGrid;
 
-    private DayOfWeek firstDayOfTheWeek;
-
-    protected MonthView(LocalDate date, DayOfWeek preferredFirstDayOfTheWeek){
-        super(date, preferredFirstDayOfTheWeek);
-
-        this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
+    protected MonthView(LocalDate date, DayOfWeek aWeekDay){
+        super(date, aWeekDay);
         this.monthGrid=new DaysOfTheMonthGrid();
         this.setLayout(new BorderLayout());
-        this.add(createNorthPanel(), BorderLayout.NORTH);
+        this.add(createNorthPanel(), BorderLayout.PAGE_START);
         this.add(monthGrid, BorderLayout.CENTER);
     }
 
-    class DayTile extends JPanel{
+    static class DayTile extends JPanel{
 
         final Dimension INITIAL_DIMENSION=new Dimension(100, 100);
         private final int dayNumber;
+        private boolean isSelected;
 
         DayTile(int aDayNumber){
             this.dayNumber=aDayNumber;
@@ -45,66 +42,75 @@ public class MonthView extends CalendarView{
         public Dimension getPreferredSize(){ // Perhaps it shouldn't be the tiles that determine the size of the app. Perhaps the tiles should be made to fit into a frame of a certain size.
             return INITIAL_DIMENSION;
         }
-
-        public Dimension getInitialDimension(){
-            return INITIAL_DIMENSION;
-        }
     }
+
 
     /**
      * Placeholder.
      */
     private class DaysOfTheMonthGrid extends JPanel{
 
+        static final int NR_OF_DAYS_IN_WEEK=7;
+        final int nrOfWeeksInMonth;
+        final int prevMonthNrOfDays;
+        final int firstDayOfMonthValue;
+        final int nrOfDaysInCurrentMonth;
+        final int lastDayOfPrevMonthValue;
+        DayTile selectedTile;
+        int aDayNumber;
+        boolean isCurrentMonth;
+
 
         private DaysOfTheMonthGrid() {
-            this.createGrid();
+            nrOfWeeksInMonth = getNrOfWeeksInMonth(YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth()), getFirstDayOfTheWeek());
+            Logger.getGlobal().info("nrOfWeeksInMonth: " + nrOfWeeksInMonth);
+            prevMonthNrOfDays=MonthView.this.getDate().minusMonths(1).lengthOfMonth();
+            Logger.getGlobal().info("prevMonthNrOfDays: " + prevMonthNrOfDays);
+            firstDayOfMonthValue=MonthView.this.getDate().withDayOfMonth(1).getDayOfWeek().getValue();
+            Logger.getGlobal().info("firstDayOfMonthValue: " + firstDayOfMonthValue);
+            nrOfDaysInCurrentMonth=MonthView.this.getDate().lengthOfMonth();
+            Logger.getGlobal().info("nrOfDaysInCurrentMonth: " + nrOfDaysInCurrentMonth);
+            lastDayOfPrevMonthValue=getPrevMonthLastDayOfMonthWeekDayValue();
+            this.initGui();
         }
 
-        private void createGrid(){
+        private void initGui(){
+            this.setLayout(new GridLayout(nrOfWeeksInMonth, NR_OF_DAYS_IN_WEEK));
 
-            final int nrOfDaysInWeek=7;
-            final int nrOfWeeksInMonth = getNrOfWeeksInMonth(YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth()), firstDayOfTheWeek);
-
-            this.setLayout(new GridLayout(nrOfWeeksInMonth, nrOfDaysInWeek));
-
-            final int prevMonthNrOfDays=MonthView.this.getDate().minusMonths(1).lengthOfMonth();
-            final int firstDayOfMonthWeekValue=getDate().withDayOfMonth(1).getDayOfWeek().getValue();
-            final int nrOfDaysInCurrentMonth=getDate().lengthOfMonth();
-
-            final int prevMonthLastDayOfMonthWeekValue=MonthView.this.getDate().minusMonths(1).getDayOfWeek().getValue();
-
-            int aDayNumber;
-
-            boolean isCurrentMonth;
-
-            if(firstDayOfMonthWeekValue==firstDayOfTheWeek.getValue()){
+            // If the first day of the month is also the preferred first day of the week (which can be set by the user) then the first day tile in the month view will have day
+            // number 1. Else the first day tile will have the number of the last day of the previous month that is also the preferred first day of the week.
+            if(this.firstDayOfMonthValue==MonthView.this.getFirstDayOfTheWeek().getValue()){
                 aDayNumber=1;
                 isCurrentMonth=true;
             }
+
+            // Else the first day tile will have the number of the last day of the previous month that is also the preferred first day of the week.
             else{
-                aDayNumber=prevMonthNrOfDays-getDifferenceInDays(firstDayOfTheWeek.getValue(), prevMonthLastDayOfMonthWeekValue);
+                aDayNumber=prevMonthNrOfDays-getDifferenceInDays(getFirstDayOfTheWeek().getValue(), lastDayOfPrevMonthValue);
                 isCurrentMonth=false;
             }
-            for(int i = 0; i<nrOfWeeksInMonth; i++) {
-                for (int j = 0; j<nrOfDaysInWeek; j++) {
+
+            // Construct a grid of day tiles.
+            for(int i = 0; i < nrOfWeeksInMonth; i++) {
+                for (int j = 0; j < NR_OF_DAYS_IN_WEEK; j++) {
 
                     tile = new DayTile(aDayNumber);
-
+                    // When month view GUI is first rendered the current date day tile will have a red border and that tile will be the selected tile..
                     if (MonthView.this.getDate().getMonth()==Calendar.CURRENT_DATE.getMonth() && aDayNumber == getDate().getDayOfMonth()) {
                         tile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                        previousDayTile = tile;
+                        selectedTile=tile;
                     } else {
                         tile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     }
 
+                    // If another tile is clicked with the mouse that tile will get a red border and be the selected tile. Also the previously selected tile will get a black border.
                     tile.addMouseListener(new MouseAdapter() {
-                        public void mouseClicked(MouseEvent me) {
-                            DayTile clickedDayTile = (DayTile) me.getSource();
-                            if (clickedDayTile != previousDayTile) {
+                        public void mouseClicked(MouseEvent mouseEvent) {
+                            DayTile clickedDayTile = (DayTile) mouseEvent.getSource();
+                            if(clickedDayTile!=selectedTile){
                                 clickedDayTile.setBorder(BorderFactory.createLineBorder(Color.RED));
-                                previousDayTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                                previousDayTile = clickedDayTile;
+                                selectedTile.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                                selectedTile = clickedDayTile;
                             }
                         }
                     });
@@ -183,11 +189,18 @@ public class MonthView extends CalendarView{
             }
             return nrOfDays;
         }
+
+        private int getPrevMonthLastDayOfMonthWeekDayValue(){
+            YearMonth ym=YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth().minus(1));
+            int numberOfDaysInMonth=ym.lengthOfMonth();
+            DayOfWeek lastDayOfMonth=LocalDate.of(ym.getYear(), ym.getMonth(), numberOfDaysInMonth).getDayOfWeek();
+            return lastDayOfMonth.getValue();
+        }
     }
 
     private JPanel createNorthPanel(){
 
-        String[] daysOfTheWeek={"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        DayOfWeek[] daysOfTheWeek=DayOfWeek.values();
 
         JLabel monthLabel=new JLabel(String.format("%s %s", getDate().getMonth().toString(), getDate().getYear()), SwingConstants.CENTER);
 
@@ -203,6 +216,7 @@ public class MonthView extends CalendarView{
         nextMonthArrowButton.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent event){
                 MonthView.this.setDate(MonthView.this.getDate().plusMonths(1));
+
                 setNewGrid();
                 setNewLabel(monthLabel);
             }
@@ -213,8 +227,6 @@ public class MonthView extends CalendarView{
                 MonthView.this.setDate(MonthView.this.getDate().minusMonths(1));
                 setNewGrid();
                 setNewLabel(monthLabel);
-
-
             }
         });
 
@@ -230,20 +242,20 @@ public class MonthView extends CalendarView{
         JPanel bottomPanel=new JPanel(new GridLayout(1, 7));
 
 
-        int dayOfTheWeekIndex=firstDayOfTheWeek.getValue()-1;
+        int dayOfTheWeekIndex=getFirstDayOfTheWeek().getValue()-1;
         int nrOfIterations=0;
-        if(firstDayOfTheWeek==DayOfWeek.MONDAY) {
+        if(getFirstDayOfTheWeek()==DayOfWeek.MONDAY) {
 
             while(nrOfIterations<daysOfTheWeek.length){
-                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeekIndex]));
+                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeekIndex].toString()));
                 nrOfIterations++;
                 dayOfTheWeekIndex++;
             }
         }
-        else if(firstDayOfTheWeek==DayOfWeek.SUNDAY){
+        else if(getFirstDayOfTheWeek()==DayOfWeek.SUNDAY){
 
             while(nrOfIterations<daysOfTheWeek.length){
-                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeekIndex]));
+                bottomPanel.add(new JLabel(daysOfTheWeek[dayOfTheWeekIndex].toString()));
                 if(dayOfTheWeekIndex==DayOfWeek.SUNDAY.getValue()-1) {
                     dayOfTheWeekIndex=0;
                     nrOfIterations++;

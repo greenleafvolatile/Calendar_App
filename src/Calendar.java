@@ -10,30 +10,27 @@ import java.util.logging.Logger;
 public class Calendar extends JFrame {
 
     private final static long serialVersionUID=1L;
+
     protected static final LocalDate CURRENT_DATE=LocalDate.now(); // Would rather that currentDate not be static. Will leave static for now until I think of another solution.
 
     private Calendar() {
-
-        this.getContentPane().setLayout(new BorderLayout());
-
-        final DayOfWeek DEFAULT_FIRST_DAY_OF_WEEK=DayOfWeek.MONDAY;
-        MonthView monthView=new MonthView(CURRENT_DATE, DEFAULT_FIRST_DAY_OF_WEEK);
-        this.add(monthView, BorderLayout.CENTER);
-
-
-
-        JPanel buttonPanel=new ButtonPanel(monthView.getDayTile().getPreferredSize());
-
-        this.add(buttonPanel, BorderLayout.WEST);
-        this.addMenuBar();
-        this.pack();
-
-
-
+        this.initGui();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
+        this.setResizable(false);
         this.setVisible(true);
+    }
 
+    private void initGui(){
+        final DayOfWeek DEFAULT_FIRST_DAY_OF_WEEK=DayOfWeek.MONDAY;
+        MonthView monthView=new MonthView(CURRENT_DATE, DEFAULT_FIRST_DAY_OF_WEEK);
+        JPanel buttonPanel=new ButtonPanel(monthView.getDayTile().getPreferredSize(), this);
+
+        // The content pane of a JFrame is by default a JPanel with a BorderLayout layout.
+        this.getContentPane().add(monthView, BorderLayout.CENTER);
+        this.getContentPane().add(buttonPanel, BorderLayout.WEST);
+        this.addMenuBar();
+        this.pack();
     }
 
     private void addMenuBar(){
@@ -53,9 +50,5 @@ public class Calendar extends JFrame {
             e.printStackTrace();
         }
         EventQueue.invokeLater(() -> new Calendar());
-
     }
-
-
-
 }

@@ -49,12 +49,12 @@ class ButtonPanel extends JPanel {
         panel.setLayout(gbag);
 
         // Add a button to open a JOptionPane to add an event to the calendar.
-        JButton addEventButton=new CustomButton("<html><center>New<br />Event</center</html>");
-        addEventButton.setMnemonic('N');
-        addEventButton.addActionListener(new ActionListener(){
+        JButton newEventButton=new CustomButton("<html><center>New<br />Event</center</html>");
+        newEventButton.setMnemonic('N');
+        newEventButton.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent actionEvent){
-                //JOptionPane.showOptionDialog(parent
+                new NewEventPane(ButtonPanel.this);
 
 
             }
@@ -67,8 +67,8 @@ class ButtonPanel extends JPanel {
         gbc.weightx=0;
         gbc.weighty=0;
         gbc.insets=new Insets(0, 4, 4, 4);
-        gbag.setConstraints(addEventButton, gbc);
-        panel.add(addEventButton);
+        gbag.setConstraints(newEventButton, gbc);
+        panel.add(newEventButton);
 
         // Add a button to exit the Calendar application.
         JButton exitButton=new CustomButton("Exit");

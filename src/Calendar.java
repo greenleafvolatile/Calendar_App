@@ -1,19 +1,37 @@
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.sql.Connection;
 import java.util.logging.Logger;
 
 public class Calendar extends JFrame {
 
     private final static long serialVersionUID=1L;
-
     protected static final LocalDate CURRENT_DATE=LocalDate.now(); // Would rather that currentDate not be static. Will leave static for now until I think of another solution.
 
+    private Connection localPostgresConnection;
+
     private Calendar() {
+
+        final String url="jdbc:postgresql://localhost/calendar";
+        final String user="postgres";
+        final String password="postgres";
+
+        try{
+            this.localPostgresConnection=DriverManager.getConnection(url, user, password);
+        }
+        catch(SQLException sqlEx){
+            sqlEx.printStackTrace(); // To-do: implement proper handling of exception in case connection to local Postgres database cannot be established.
+            return;
+        }
+
         this.initGui();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
@@ -23,8 +41,10 @@ public class Calendar extends JFrame {
 
     private void initGui(){
         final DayOfWeek DEFAULT_FIRST_DAY_OF_WEEK=DayOfWeek.MONDAY;
-        MonthView monthView=new MonthView(CURRENT_DATE, DEFAULT_FIRST_DAY_OF_WEEK);
-        JPanel buttonPanel=new ButtonPanel(monthView.getDayTile().getPreferredSize(), this);
+        MonthView monthView=new MonthView(Calendar.CURRENT_DATE, DEFAULT_FIRST_DAY_OF_WEEK, this.localPostgresConnection );
+        // I want the buttons on the button pane
+        JPanel buttonPanel=new ButtonPanel(monthView.getDayTile().getPreferredSize(), localPostgresConnection);  // To-do: currently setResizable()==false. Do
+                                                                                                    // I still need to actively pass tile dimensions?
 
         // The content pane of a JFrame is by default a JPanel with a BorderLayout layout.
         this.getContentPane().add(monthView, BorderLayout.CENTER);
@@ -40,13 +60,13 @@ public class Calendar extends JFrame {
         this.setJMenuBar(menuBar);
     }
 
-
     public static void main (String[]args) {
-        try{
-            String className=UIManager.getCrossPlatformLookAndFeelClassName();
+
+        try {
+            String className = UIManager.getCrossPlatformLookAndFeelClassName();
             UIManager.setLookAndFeel(className);
         }
-        catch(Exception e){
+        catch (Exception e) {
             e.printStackTrace();
         }
         EventQueue.invokeLater(() -> new Calendar());

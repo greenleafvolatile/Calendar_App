@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.time.*;
+import java.sql.Connection;
 
 
 public class MonthView extends CalendarView{
@@ -12,8 +13,8 @@ public class MonthView extends CalendarView{
     private DayTile tile;
     private DaysOfTheMonthGrid monthGrid;
 
-    protected MonthView(LocalDate date, DayOfWeek aWeekDay){
-        super(date, aWeekDay);
+    protected MonthView(LocalDate date, DayOfWeek aWeekDay, Connection localPostgresConnection){
+        super(date, aWeekDay, localPostgresConnection);
         this.monthGrid=new DaysOfTheMonthGrid();
         this.setLayout(new BorderLayout());
         this.add(createNorthPanel(), BorderLayout.PAGE_START);
@@ -132,7 +133,7 @@ public class MonthView extends CalendarView{
          * Counts the first few days of the month before reaching the desired starting day, then counts how many
          * full weeks there are, then adds 1 more week for any remaining days (should perhaps be in a different class, maybe a Utils Class).
          * @param yearMonth a specific year-month combination. Since sometimes a month has a different number of days depending
-         * on which year it is the parameter can not just be a month.
+         * on which year it is, the parameter can not just be a month.
          * @param firstDayOfWeek the desired first day of the week. The number of weeks in a month is dependent on the first
          * day of the week.
          * @return the number of days in the week.

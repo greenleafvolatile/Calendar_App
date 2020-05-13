@@ -7,6 +7,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.util.logging.Logger;
+import java.sql.Connection;
 
 class ButtonPanel extends JPanel {
 
@@ -15,7 +16,8 @@ class ButtonPanel extends JPanel {
     private Dimension buttonDimension;
 
 
-    public ButtonPanel(Dimension tileDimension, Container parent) {
+
+    public ButtonPanel(Dimension tileDimension, Connection localPostgresConnection) {
 
         this.buttonDimension = tileDimension;
         this.initGUI();
@@ -54,7 +56,7 @@ class ButtonPanel extends JPanel {
         newEventButton.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent actionEvent){
-                new NewEventPane(ButtonPanel.this);
+                new NewEventPane();
 
 
             }

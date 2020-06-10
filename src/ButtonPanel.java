@@ -20,11 +20,12 @@ class ButtonPanel extends JPanel {
     private final int RIGID_AREA_HEIGHT=36; // I know the height of JPanel northPanel in MonthView.java is 36px after calling pack() in Calendar.java.
     private Dimension buttonDimension;
     private Connection localPostgresConnection;
+    private MonthView view; // should be of type CalendarView (program to an interface not an implementation. Just need to figure out how shit should fit together.
 
-    public ButtonPanel(Dimension tileDimension, Connection aLocalPostgresConnection) {
-
+    public ButtonPanel(MonthView aView, Connection aLocalPostgresConnection) {
         this.localPostgresConnection=aLocalPostgresConnection;
-        this.buttonDimension = tileDimension;
+        this.buttonDimension = DayView.INITIAL_DIMENSION;
+        this.view=aView;
         this.initGUI();
     }
 
@@ -41,23 +42,32 @@ class ButtonPanel extends JPanel {
     }
 
 
-    public class NewEventPane {
+    public class NewEventPane extends JDialog {
 
         private JTextField eventNameField;
 
-        public NewEventPane(){
+        public NewEventPane() {
+            super((JFrame) ButtonPanel.this.getTopLevelAncestor(), "Add New Event", true);
             this.initGUI();
         }
 
         private void initGUI(){
-            JOptionPane.showOptionDialog(ButtonPanel.this.getParent(), createMainPanel(), "Add New Event", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null,  createButtons(), createButtons()[1]);
+            JOptionPane optionPane=new JOptionPane(createMainPanel(), JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, createButtons(), createButtons()[0]);
+            this.getContentPane().add(optionPane);
+            this.pack();
+            this.setLocationRelativeTo(ButtonPanel.this.getTopLevelAncestor());
+            this.setVisible(true);
         }
 
         private JPanel createMainPanel(){
-            JPanel mainPanel=new JPanel(new BorderLayout());
+            GridBagLayout gbag=new GridBagLayout();
+            GridBagConstraints gbc=new GridBagConstraints();
+
+
+            JPanel mainPanel=new JPanel(gbag);
 
             // Add a text field so the user can enter a title for a new event.
-            eventNameField=new JTextField();
+            eventNameField=new JTextField(15);
             eventNameField.setLayout(new BorderLayout());
 
             // Add a prompt to the text field.
@@ -68,7 +78,6 @@ class ButtonPanel extends JPanel {
 
             Document eventNameFieldDocument=eventNameField.getDocument();
             eventNameFieldDocument.addDocumentListener(new DocumentListener(){
-
 
                 // When the user enters text in the text field the prompt should disappear.
                 public void insertUpdate(DocumentEvent de){
@@ -90,8 +99,28 @@ class ButtonPanel extends JPanel {
 
             eventNameField.add(addEventPrompt);
             addEventPrompt.setVisible(true);
-
+            gbc.anchor=GridBagConstraints.WEST;
+            gbc.gridx=0;
+            gbc.gridy=0;
+            gbag.setConstraints(eventNameField, gbc);
             mainPanel.add(eventNameField);
+
+            JLabel startDateLabel=new JLabel("Start date", SwingConstants.LEFT);
+            gbc.insets=new Insets(5, 0, 0, 0);
+            gbc.gridx=0;
+            gbc.gridy=1;
+            gbag.setConstraints(startDateLabel, gbc);
+            mainPanel.add(startDateLabel);
+
+            JTextField startDateField=new JTextField(15);
+
+            startDateField.setText(String.format("%d\\%d\\%d", view.getSelectedDate().getDayOfMonth(), view.getSelectedDate().getMonth().getValue(), view.getDate().getYear()));
+            //startDateField.setText(String.format("%d\\%d\\%d", view.getSelectedTile().getDayNumber(), view.getDate().getMonth().getValue(), view.getDate().getYear()) );
+            gbc.gridx=0;
+            gbc.gridy=2;
+            gbag.setConstraints(startDateField, gbc);
+            mainPanel.add(startDateField);
+
             return mainPanel;
         }
 
@@ -108,6 +137,17 @@ class ButtonPanel extends JPanel {
             });
 
             JButton cancelButton=new JButton("Cancel");
+            cancelButton.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent ae){
+                    /*Window parent=SwingUtilities.getWindowAncestor(cancelButton);
+                    if(parent!=null){
+                        parent.dispose();
+                    }*/
+                    NewEventPane.this.dispose();
+
+
+                }
+            });
 
             buttons[0]=addEventButton;
             buttons[1]=cancelButton;
@@ -137,8 +177,6 @@ class ButtonPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent actionEvent){
                 new NewEventPane();
-
-
             }
 
         });
@@ -155,6 +193,11 @@ class ButtonPanel extends JPanel {
         // Add a button to exit the Calendar application.
         JButton exitButton=new CustomButton("Exit");
         exitButton.setMnemonic('E');
+        exitButton.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent event){
+                System.exit(0);
+            }
+        });
         gbc.anchor=GridBagConstraints.SOUTH;
         gbc.gridx=0;
         gbc.gridy=1;

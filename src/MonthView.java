@@ -114,13 +114,6 @@ public class MonthView extends CalendarView{
 
             return nrOfWeeksInMonth;
         }
-
-        private int getPrevMonthLastDayOfMonthWeekDayValue(){
-            YearMonth ym=YearMonth.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonth().minus(1));
-            int numberOfDaysInMonth=ym.lengthOfMonth();
-            DayOfWeek lastDayOfMonth=LocalDate.of(ym.getYear(), ym.getMonth(), numberOfDaysInMonth).getDayOfWeek();
-            return lastDayOfMonth.getValue();
-        }
     }
 
     private JPanel createNorthPanel(){

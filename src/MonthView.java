@@ -29,7 +29,6 @@ public class MonthView extends CalendarView{
 
     private class DaysOfTheMonthGrid extends JPanel{
 
-
         static final int NR_OF_DAYS_IN_WEEK=7;
         final int nrOfWeeksInMonth;
         final int firstDayOfMonthValue;

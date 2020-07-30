@@ -1,3 +1,4 @@
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
 import java.net.Socket;
 import java.sql.ResultSet;
@@ -25,35 +26,49 @@ class DayView extends CalendarView {
     final static Dimension INITIAL_DIMENSION=new Dimension(100, 100);
     public static JList previousList = null;
 
-    private CalendarView parentView;
-    private List<Event> events;
+    private MonthView currentView;
     private DefaultListModel<Event> lm;
 
-    private boolean isSelected;
 
-    DayView(LocalDate date, CalendarView parentView, boolean isSelected){
 
-        super(date, parentView.getLocalPostgresConnection());
+    DayView(LocalDate date, MonthView view){
+
+        super(date);
+        this.currentView = view;
+
         this.setLayout(new BorderLayout());
-        this.events = new ArrayList<Event>();
-        this.parentView=parentView;
-        this.setSelected(isSelected);
 
         JLabel dateLabel = new JLabel(String.valueOf(this.getDate().getDayOfMonth()), SwingConstants.LEFT);
         dateLabel.setFont(new Font(this.getFont().getFontName(), this.getFont().getStyle(), 10));
         dateLabel.setOpaque(true);
         dateLabel.setBackground(Color.WHITE);
+        dateLabel.setBorder(BorderFactory.createEtchedBorder());
         this.add(dateLabel, BorderLayout.NORTH);
 
-        lm = new DefaultListModel<Event>();
-        JList<Event> list = new JList<Event>(lm);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+        lm = new DefaultListModel<>();
+
+        JList<Event> list = new JList<>(lm) {
+            // Override locationToIndex to prevent the last item on the list to be selected when the user clicks
+            // outside the bounds of (below) the last cell of the list.
+            @Override
+            public int locationToIndex(Point location) {
+                int index = super.locationToIndex(location);
+                Logger.getGlobal().info("" + index);
+                if (index != -1 && !getCellBounds(index, index).contains(location)) {
+                    return -1;
+                }
+                else {
+                    return index;
+                }
+            }
+        };
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new EventListRenderer());
 
-
-        // Add a MouseListener so that when the user clicks on a specific date
+        // Add a MouseListener so that when the user left clicks on a specific date
         // that date will be the selected date with a red border.
+        // When the user right clicks an event a popup menu will render.
         list.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -67,46 +82,47 @@ class DayView extends CalendarView {
                 maybeShowPopUp(mE);
 
             }
+
             @Override
             public void mouseClicked(MouseEvent mE){
+                DayView.this.currentView.getSelectedDay().setSelected(false);
                 DayView.this.setSelected(true);
-                CalendarView parent=DayView.this.parentView;
-                DayView currentlySelectedView=(DayView) parent.getSelectedView();
-                currentlySelectedView.setSelected(false);
-                parent.setSelectedView(DayView.this);
+                DayView.this.currentView.setSelectedDay(DayView.this);
             }
 
             private void maybeShowPopUp(MouseEvent mE) {
 
-                int selectedIndex = list.getSelectedIndex();
+                if (mE.isPopupTrigger()) {
 
-                // I need the width in pixels of the text in a cell of the list for the location of the popup.
-                // For that I need a FontMetrics object.
-                EventListRenderer renderer = (EventListRenderer) list.getCellRenderer();
-                Font font = renderer.getFont();
-                FontMetrics fm = renderer.getFontMetrics(font);
+                    int selectedEventIndex = list.getSelectedIndex();
 
-                // And the text.
-                String text = lm.getElementAt(selectedIndex).getTitle();
+                    if (selectedEventIndex != -1) {
 
-                // Get the width of the text.
-                int width = fm.stringWidth(text);
+                        // I need the width in pixels of the text in a cell of the list for the location of the popup.
+                        // For that I need a FontMetrics object.
+                        EventListRenderer renderer = (EventListRenderer) list.getCellRenderer();
+                        Font font = renderer.getFont();
+                        FontMetrics fm = renderer.getFontMetrics(font);
 
-                // The popup should only render when the user clicks on a selected cell.
-                // To compare the location where the user clicked to the location of the selected cell, I need the
-                // coordinates of that cell in the list.
-                Rectangle bounds = list.getCellBounds(selectedIndex, selectedIndex);
-                Point point = bounds.getLocation();
+                        // And the text.
+                        String text = lm.getElementAt(selectedEventIndex).getTitle();
 
-                if(mE.isPopupTrigger() && list.getSelectedIndex() == list.locationToIndex(mE.getPoint())) {
+                        // Get the width of the text.
+                        int width = fm.stringWidth(text);
 
-                    JPopupMenu menu = new JPopupMenu();
-                    JMenuItem item = new JMenuItem("Test");
-                    menu.add(item);
+                        // The popup should only render when the user clicks on a selected cell.
+                        // To compare the location where the user clicked to the location of the selected cell, I need the
+                        // coordinates of that cell in the list.
+                        Rectangle bounds = list.getCellBounds(selectedEventIndex, selectedEventIndex);
+                        Point point = bounds.getLocation();
 
-                    // Show the popup in the JList at the end of the text in a selected cell, underneath that cell.
-                    menu.show(list, (int) (point.getX() + width), (int) (point.getY() + bounds.getHeight()));
 
+                        JPopupMenu menu = new CustomPopUp(lm.getElementAt(selectedEventIndex));
+
+                        // Show the popup in the JList at the end of the text in a selected cell, underneath that cell.
+                        menu.show(list, (int) (point.getX() + width), (int) (point.getY() + bounds.getHeight()));
+
+                    }
                 }
             }
         });
@@ -114,24 +130,19 @@ class DayView extends CalendarView {
         // Add a ListSelectionListener so that when an event is selected on a specific date
         // events that were selected on another date are unselected.
         list.addListSelectionListener(new ListSelectionListener() {
-
             @Override
             public void valueChanged(ListSelectionEvent lSE) {
-                if (DayView.previousList != null && lSE.getSource() != previousList) {
 
+                if (DayView.previousList != null && lSE.getSource() != previousList) {
                     previousList.getSelectedIndex();
                     previousList.clearSelection();
                 }
-
-
                 previousList = (JList) lSE.getSource();
             }
         });
 
-
-
+        //JScrollPane scrollPane = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.add(list, BorderLayout.CENTER);
-
         this.getEvents();
 
     }
@@ -159,14 +170,14 @@ class DayView extends CalendarView {
     }
 
     protected void setSelectedView(CalendarView aView){
-        // do nothing method.
-
+        // do nothing method. Design flaw?
     }
 
     private void getEvents() {
+        //lm.removeAllElements();
         String sql = "SELECT * FROM Event WHERE DATE(startDateAndTime)=? ORDER BY startDateAndTime::time;";  // I could order here with ORDER BY or I could add it all to a collection and let the user sort.
         try{
-            PreparedStatement statement = this.getLocalPostgresConnection().prepareStatement(sql);
+            PreparedStatement statement = DBUtils.getConnection().prepareStatement(sql);
             statement.setObject(1, Date.valueOf(this.getDate()));
             ResultSet resultSet = statement.executeQuery();
 
@@ -186,5 +197,29 @@ class DayView extends CalendarView {
     }
 
 
+    public class CustomPopUp extends JPopupMenu {
 
+        private Event event;
+
+        public CustomPopUp(Event event) {
+            this.event = event;
+
+            this.add(new AbstractAction("Edit") {
+                @Override
+                public void actionPerformed(ActionEvent actionEvent) {
+                    new EditEventDialog(event);
+                }
+            });
+
+            this.add(new AbstractAction("Delete") {
+
+                public void actionPerformed(ActionEvent ae) {
+                    Logger.getGlobal().info("" + DBUtils.deleteEvent(event.getId()));
+                    lm.removeAllElements();
+                    DayView.this.getEvents();
+
+                }
+            });
+        }
+    }
 }

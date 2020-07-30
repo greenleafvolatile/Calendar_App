@@ -28,13 +28,12 @@ public class NewEventDialog extends JDialog {
     private JTextField eventTitleField, startDateField, startTimeField, endDateField, endTimeField;
     private JLabel errorLabel;
     private boolean isValidStartDate;
+    private MonthView view;
 
-    private CalendarView view;
-
-    public NewEventDialog(JFrame owner, CalendarView view) {
+    public NewEventDialog(JFrame owner, MonthView currentView) {
 
         super(owner, "Add New Event", true);
-        this.view = view;
+        this.view = currentView;
         this.initGUI(owner);
     }
 
@@ -87,14 +86,14 @@ public class NewEventDialog extends JDialog {
         gbag.setConstraints(startDateLabel, gbc);
         centerPanel.add(startDateLabel);
 
-        startDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(view.getDate()), fieldWidth);
+        startDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(this.view.getSelectedDay().getDate()), fieldWidth);
         gbc.insets = new Insets(0, 0, 5, 0);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbag.setConstraints(startDateField, gbc);
         centerPanel.add(startDateField);
 
-        endDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(view.getDate()), fieldWidth);
+        endDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(this.view.getSelectedDay().getDate()), fieldWidth);
         gbc.insets = new Insets(0, 0, 5, 0);
         gbc.gridx = 0;
         gbc.gridy = 5;
@@ -171,11 +170,11 @@ public class NewEventDialog extends JDialog {
     }
 
     private void insertNewEvent(Event anEvent){
-        final String insertEventSql = "INSERT INTO event(name, startdateandtime, enddateandtime)" + "VALUES(?,?,?)";
+        final String insertEventSql = "INSERT INTO event(title, startdateandtime, enddateandtime)" + "VALUES(?,?,?)";
         long id = 0;
 
         try {
-            PreparedStatement statement = view.getLocalPostgresConnection().prepareStatement(insertEventSql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement statement = DBUtils.getConnection().prepareStatement(insertEventSql, Statement.RETURN_GENERATED_KEYS);
             statement.setString(1, anEvent.getTitle());
             statement.setObject(2, Timestamp.valueOf(anEvent.getStartDateAndTime()));
             statement.setObject(3, Timestamp.valueOf(anEvent.getEndDateAndTime()));
@@ -191,7 +190,9 @@ public class NewEventDialog extends JDialog {
                     System.out.println(sqlEx.getMessage());
                 }
             }
+            this.view.setNewGrid();
         }
+
         catch(SQLException sqlEx){
             System.out.println(sqlEx.getMessage());
         }

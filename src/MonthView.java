@@ -12,11 +12,11 @@ import java.sql.Connection;
 
 public class MonthView extends CalendarView{
 
-    private CalendarView selectedDay;
+    private DayView selectedDay;
     private DaysOfTheMonthGrid monthGrid;
 
-    protected MonthView(LocalDate date, DayOfWeek aWeekDay, Connection localPostgresConnection){
-        super(date, aWeekDay, localPostgresConnection);
+    protected MonthView(LocalDate date, DayOfWeek aWeekDay){
+        super(date, aWeekDay);
         this.initGui();
     }
 
@@ -46,25 +46,24 @@ public class MonthView extends CalendarView{
             LocalDate date;
             if(this.firstDayOfMonthValue==MonthView.this.getFirstDayOfTheWeek().getValue()){
                 date =LocalDate.of(MonthView.this.getDate().getYear(), MonthView.this.getDate().getMonthValue(), 1);
-                //isCurrentMonth=true;
             }
             else{
                 date =YearMonth.from(MonthView.this.getDate()).minusMonths(1).atEndOfMonth().with(TemporalAdjusters.previousOrSame(MonthView.this.getFirstDayOfTheWeek()));
-                //isCurrentMonth=false;
             }
 
             // Construct a grid of DayView objects.
             for(int i = 0; i < nrOfWeeksInMonth; i++) {
                 for (int j = 0; j < NR_OF_DAYS_IN_WEEK; j++) {
 
-                    CalendarView dayView;
-                    if(date.equals(Calendar.CURRENT_DATE)){
-                        dayView = new DayView(date, MonthView.this, true);
-                        selectedDay= dayView;
+                    DayView dayView = new DayView(date, MonthView.this);
+                    if (date.equals(Calendar.CURRENT_DATE)) {
+                        dayView.setSelected(true);
+                        selectedDay = dayView;
                     }
-                    else{
-                        dayView = new DayView(date, MonthView.this, false);
+                    else {
+                        dayView.setSelected(false);
                     }
+
                     this.add(dayView);
                     date = date.plusDays(1);
                 }
@@ -158,7 +157,6 @@ public class MonthView extends CalendarView{
 
         JPanel bottomPanel=new JPanel(new GridLayout(1, 7));
 
-
         int dayOfTheWeekIndex=getFirstDayOfTheWeek().getValue()-1;
         int nrOfIterations=0;
         if(getFirstDayOfTheWeek()==DayOfWeek.MONDAY) {
@@ -191,7 +189,7 @@ public class MonthView extends CalendarView{
     /**
      * This method changes the month grid when the month is changed.
      */
-    private void setNewGrid(){
+    public void setNewGrid(){
         MonthView.this.remove(monthGrid);
         monthGrid=new DaysOfTheMonthGrid();
         MonthView.this.add(monthGrid, BorderLayout.CENTER);
@@ -207,13 +205,12 @@ public class MonthView extends CalendarView{
         monthLabel.setHorizontalAlignment(SwingConstants.CENTER);
     }
 
-    @Override
-    protected CalendarView getSelectedView(){
+    protected DayView getSelectedDay(){
         return selectedDay;
     }
 
-    protected void setSelectedView(CalendarView aDayView){
-        this.selectedDay=aDayView;
+    protected void setSelectedDay(DayView selectedDay) {
+        this.selectedDay = selectedDay;
     }
 }
 

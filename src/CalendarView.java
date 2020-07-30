@@ -9,27 +9,23 @@ import java.sql.Connection;
 
 public abstract class CalendarView extends JPanel {
 
-    private boolean isSelectable;
     private LocalDate selectedDate;
     private LocalDate date;
     private DayOfWeek firstDayOfTheWeek;
-    private Connection localPostgresConnection;
 
-    protected CalendarView(LocalDate aDate, DayOfWeek aWeekDay, Connection aLocalPostgresConnection){
+    protected CalendarView(LocalDate aDate, DayOfWeek aWeekDay){
         this.date=aDate;
         this.selectedDate=aDate;
         this.firstDayOfTheWeek=aWeekDay;
-        this.localPostgresConnection=aLocalPostgresConnection;
     }
 
-    protected CalendarView(LocalDate aDate, Connection aLocalPostgresConnection){
+    protected CalendarView(LocalDate aDate){
         this.date=aDate;
-        this.localPostgresConnection=aLocalPostgresConnection;
     }
 
-    protected void setSelectedDate(LocalDate aDate){
+    /*protected void setSelectedDate(LocalDate aDate){
         this.selectedDate=aDate;
-    }
+    }*/
 
     protected LocalDate getSelectedDate(){
         return this.selectedDate;
@@ -51,14 +47,6 @@ public abstract class CalendarView extends JPanel {
         this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
     }
 
-    protected Connection getLocalPostgresConnection(){
-        return localPostgresConnection;
-    }
-
-    protected boolean getSelected(){
-        return isSelectable;
-    }
-
     protected void setSelected(boolean isSelected){
         if(isSelected){
             setBorder(BorderFactory.createLineBorder(Color.RED));
@@ -68,8 +56,7 @@ public abstract class CalendarView extends JPanel {
         }
     }
 
-    protected abstract CalendarView getSelectedView();
+    /*protected abstract CalendarView getSelectedView();*/
 
-    protected abstract void setSelectedView(CalendarView aView);
-
+    /*protected abstract void setSelectedView(CalendarView aView);*/
 }

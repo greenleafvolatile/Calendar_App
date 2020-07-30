@@ -7,14 +7,12 @@ import java.sql.*;
 class ButtonPanel extends JPanel {
 
     private final int RIGID_AREA_HEIGHT=36; // I know the height of JPanel northPanel in MonthView.java is 36px after calling pack() in Calendar.java.
-    private Dimension buttonDimension;
-    private Connection localPostgresConnection;
-    private MonthView view; // should be of type CalendarView (program to an interface not an implementation. Just need to figure out how shit should fit together.
+    //private MonthView view; // should be of type CalendarView (program to an interface not an implementation. Just need to figure out how shit should fit together.
 
-    public ButtonPanel(MonthView aView, Connection aLocalPostgresConnection) {
-        this.localPostgresConnection=aLocalPostgresConnection;
-        this.buttonDimension = DayView.INITIAL_DIMENSION;
-        this.view=aView;
+    private MonthView view;
+
+    public ButtonPanel(MonthView view) {
+        this.view = view;
         this.initGUI();
     }
 
@@ -25,9 +23,10 @@ class ButtonPanel extends JPanel {
                                                    }
 
         @Override
-        public Dimension getPreferredSize(){
-                                          return buttonDimension;
-                                                                 }
+        public Dimension getPreferredSize() {
+            return DayView.INITIAL_DIMENSION;
+        }
+
     }
 
 
@@ -50,13 +49,17 @@ class ButtonPanel extends JPanel {
         JButton newEventButton=new CustomButton("<html><center>New<br />Event</center</html>");
         newEventButton.setMnemonic('N');
         newEventButton.addActionListener(new ActionListener(){
+
             @Override
             public void actionPerformed(ActionEvent actionEvent){
 
+
                 new NewEventDialog((JFrame) ButtonPanel.this.getTopLevelAncestor(), view);
+                //new NewEventDialog((JFrame) ButtonPanel.this.getTopLevelAncestor(), view.getSelectedDay().getDate());
             }
 
         });
+
         gbc.anchor=GridBagConstraints.NORTH;
         gbc.gridx=0;
         gbc.gridy=0;
@@ -69,10 +72,12 @@ class ButtonPanel extends JPanel {
         JButton exitButton=new CustomButton("Exit");
         exitButton.setMnemonic('E');
         exitButton.addActionListener(new ActionListener(){
+
             public void actionPerformed(ActionEvent event){
                 System.exit(0);
             }
         });
+
         gbc.gridx=0;
         gbc.gridy=1;
         gbc.weighty=0 ;

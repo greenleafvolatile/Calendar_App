@@ -18,7 +18,6 @@ public class Event implements Comparable<Event> {
         this.endDateAndTime = anEndDateAndTime;
     }
 
-
     /**
      * Constructor for creating Event objects after retrieving from database.
      * @param id primary key assigned on insertion to database.
@@ -31,18 +30,6 @@ public class Event implements Comparable<Event> {
         this.title=aTitle;
         this.startDateAndTime = aStartDateAndTime;
         this.endDateAndTime = anEndDateAndTime;
-    }
-
-    protected String getTitle(){
-        return this.title;
-    }
-
-    protected LocalDateTime getStartDateAndTime() {
-        return this.startDateAndTime;
-    }
-
-    protected LocalDateTime getEndDateAndTime() {
-        return this.endDateAndTime;
     }
 
     @Override
@@ -91,4 +78,21 @@ public class Event implements Comparable<Event> {
     public String toString() {
         return "Title: " + title + "Starts: " + startDateAndTime + "Ends: " + endDateAndTime;
     }
+
+    protected String getTitle(){
+        return this.title;
+    }
+
+    protected LocalDateTime getStartDateAndTime() {
+        return this.startDateAndTime;
+    }
+
+    protected LocalDateTime getEndDateAndTime() {
+        return this.endDateAndTime;
+    }
+
+    protected int getId() {
+        return this.id;
+    }
+
 }

@@ -3,16 +3,15 @@ import java.awt.event.ActionEvent;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
+import java.util.logging.Logger;
 
 class ButtonPanel extends JPanel {
 
+    private static final long serialVersionUID = 1L;
     private final int RIGID_AREA_HEIGHT=36; // I know the height of JPanel northPanel in MonthView.java is 36px after calling pack() in Calendar.java.
-    //private MonthView view; // should be of type CalendarView (program to an interface not an implementation. Just need to figure out how shit should fit together.
 
-    private MonthView view;
 
-    public ButtonPanel(MonthView view) {
-        this.view = view;
+    public ButtonPanel() {
         this.initGUI();
     }
 
@@ -29,8 +28,6 @@ class ButtonPanel extends JPanel {
 
     }
 
-
-
     public void initGUI(){
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -45,8 +42,10 @@ class ButtonPanel extends JPanel {
         GridBagConstraints gbc=new GridBagConstraints();
         panel.setLayout(gbag);
 
-        // Add a button to open a JOptionPane to add an event to the calendar.
-        JButton newEventButton=new CustomButton("<html><center>New<br />Event</center</html>");
+        // Add a button for opening a JOptionPane to add an event to the calendar.
+        JButton newEventButton=new CustomButton("<html><center><u>N</u>ew<br />Event");
+
+        newEventButton.setBorder(BorderFactory.createRaisedBevelBorder());
         newEventButton.setMnemonic('N');
         newEventButton.addActionListener(new ActionListener(){
 
@@ -54,38 +53,83 @@ class ButtonPanel extends JPanel {
             public void actionPerformed(ActionEvent actionEvent){
 
 
-                new NewEventDialog((JFrame) ButtonPanel.this.getTopLevelAncestor(), view);
-                //new NewEventDialog((JFrame) ButtonPanel.this.getTopLevelAncestor(), view.getSelectedDay().getDate());
+                new NewEventDialog((JFrame) ButtonPanel.this.getTopLevelAncestor());
             }
 
         });
 
-        gbc.anchor=GridBagConstraints.NORTH;
-        gbc.gridx=0;
         gbc.gridy=0;
-        gbc.weighty=1;
         gbc.insets=new Insets(0, 4, 4, 4);
         gbag.setConstraints(newEventButton, gbc);
         panel.add(newEventButton);
 
+        // Add a button for opening a JOptionPane to edit an event.
+        JButton editEventButton = new CustomButton("<html><center><u>E</u>dit<br />Event</center></html>");
+        editEventButton.setBorder(BorderFactory.createRaisedBevelBorder());
+        editEventButton.setMnemonic('E');
+
+        editEventButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent aE) {
+                if (DayView.getSelectedEvent() != null) {
+                    new EditEventDialog((JFrame) ButtonPanel.this.getTopLevelAncestor(), DayView.getSelectedEvent());
+                }
+                else {
+                    showSelectEventWarning();
+                }
+            }
+        });
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 4, 4, 4);
+        gbag.setConstraints(editEventButton, gbc);
+        panel.add(editEventButton);
+
+        JButton deleteEventButton = new CustomButton("<html><center><u>D</u>elete<br />Event</center></html>");
+
+        deleteEventButton.setBorder(BorderFactory.createRaisedBevelBorder());
+        deleteEventButton.setMnemonic('D');
+        deleteEventButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (DayView.getSelectedEvent() != null) {
+                    ((DayView) DayView.getSelectedView()).deleteEvent();
+                }
+                else {
+                    showSelectEventWarning();
+                }
+            }
+        });
+
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.gridy = 2;
+        gbc.weighty = 1;
+        gbc.insets = new Insets(0, 4, 4, 4);
+        gbag.setConstraints(deleteEventButton, gbc);
+        panel.add(deleteEventButton);
+
         // Add a button to exit the Calendar application.
         JButton exitButton=new CustomButton("Exit");
-        exitButton.setMnemonic('E');
+
+        exitButton.setBorder(BorderFactory.createRaisedBevelBorder());
+        exitButton.setMnemonic('x');
         exitButton.addActionListener(new ActionListener(){
 
             public void actionPerformed(ActionEvent event){
                 System.exit(0);
             }
+
         });
 
-        gbc.gridx=0;
-        gbc.gridy=1;
-        gbc.weighty=0 ;
-        gbc.insets=new Insets(0, 4, 0, 4);
+        gbc.gridy = 3;
+        gbc.weighty = 0;
+        gbc.insets = new Insets(0, 4, 4, 4);
         gbag.setConstraints(exitButton, gbc);
         panel.add(exitButton);
 
         this.add(panel);
+    }
+
+    private void showSelectEventWarning() {
+        JOptionPane.showMessageDialog(this.getTopLevelAncestor(), "Please select an event!", "Error: no event selected", JOptionPane.ERROR_MESSAGE, null);
     }
 
 

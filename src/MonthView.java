@@ -9,7 +9,6 @@ import java.awt.geom.Rectangle2D;
 import java.time.*;
 import java.sql.Connection;
 
-
 public class MonthView extends CalendarView{
 
     private DayView selectedDay;
@@ -55,13 +54,16 @@ public class MonthView extends CalendarView{
             for(int i = 0; i < nrOfWeeksInMonth; i++) {
                 for (int j = 0; j < NR_OF_DAYS_IN_WEEK; j++) {
 
-                    DayView dayView = new DayView(date, MonthView.this);
+                    DayView dayView = new DayView(date);
                     if (date.equals(Calendar.CURRENT_DATE)) {
-                        dayView.setSelected(true);
-                        selectedDay = dayView;
+                        dayView.setSelectedView(true);
+
+
+                        //selectedDay = dayView;
                     }
                     else {
-                        dayView.setSelected(false);
+                        dayView.setSelectedView(false);
+                        //dayView.setSelected(false);
                     }
 
                     this.add(dayView);

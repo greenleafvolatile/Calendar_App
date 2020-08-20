@@ -1,11 +1,7 @@
-
 import javax.swing.*;
 import java.awt.*;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.sql.Connection;
 
 public class Calendar extends JFrame {
 
@@ -21,7 +17,7 @@ public class Calendar extends JFrame {
         MonthView monthView=new MonthView(Calendar.CURRENT_DATE, DEFAULT_FIRST_DAY_OF_WEEK);
 
         // I want the buttons on the button panel to be the same size as the day tile. But day tile size changes depending on the number of weeks in a month. To-do.
-        JPanel buttonPanel=new ButtonPanel(monthView);  // To-do: currently setResizable() == false. Do I still need to actively pass tile dimensions?
+        JPanel buttonPanel=new ButtonPanel();  // To-do: currently setResizable() == false. Do I still need to actively pass tile dimensions?
 
         this.getContentPane().add(monthView, BorderLayout.CENTER);
         this.getContentPane().add(buttonPanel, BorderLayout.LINE_START);

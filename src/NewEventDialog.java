@@ -22,18 +22,17 @@ import java.util.logging.Logger;
 public class NewEventDialog extends JDialog {
 
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-uuuu").withResolverStyle(ResolverStyle.STRICT);
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withResolverStyle(ResolverStyle.STRICT);
+    private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-uuuu").withResolverStyle(ResolverStyle.STRICT);
+    private final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withResolverStyle(ResolverStyle.STRICT);
 
     private JTextField eventTitleField, startDateField, startTimeField, endDateField, endTimeField;
     private JLabel errorLabel;
     private boolean isValidStartDate;
-    private MonthView view;
 
-    public NewEventDialog(JFrame owner, MonthView currentView) {
+    public NewEventDialog(JFrame owner) {
 
         super(owner, "Add New Event", true);
-        this.view = currentView;
+        //this.view = currentView;
         this.initGUI(owner);
     }
 
@@ -86,14 +85,18 @@ public class NewEventDialog extends JDialog {
         gbag.setConstraints(startDateLabel, gbc);
         centerPanel.add(startDateLabel);
 
-        startDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(this.view.getSelectedDay().getDate()), fieldWidth);
+
+        startDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(DayView.getSelectedView().getDate()), fieldWidth);
+        //startDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(this.view.getSelectedDay().getDate()), fieldWidth);
         gbc.insets = new Insets(0, 0, 5, 0);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbag.setConstraints(startDateField, gbc);
         centerPanel.add(startDateField);
 
-        endDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(this.view.getSelectedDay().getDate()), fieldWidth);
+
+        endDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(DayView.getSelectedView().getDate()), fieldWidth);
+        //endDateField = new CustomTextField(dateFormat, DATE_FORMATTER.format(this.view.getSelectedDay().getDate()), fieldWidth);
         gbc.insets = new Insets(0, 0, 5, 0);
         gbc.gridx = 0;
         gbc.gridy = 5;
@@ -102,11 +105,11 @@ public class NewEventDialog extends JDialog {
 
         fieldWidth = 5; // A smaller field width for the time fields.
 
-        // I copied the Google Calendar app in this. When opening the new event dialog default start and end time is
+        // I copied the Google Calendar app in this. When opening the new event dialog default start- and end-time is
         // the next whole hour if current time is passed the half hour, else the whole hour.
-        LocalTime time = LocalTime.now().getMinute() > 30 ? LocalTime.now().plusHours(1).truncatedTo(ChronoUnit.HOURS) : LocalTime.now().truncatedTo(ChronoUnit.HOURS).plusMinutes(30);
+        LocalTime startTime = LocalTime.now().getMinute() > 30 ? LocalTime.now().plusHours(1).truncatedTo(ChronoUnit.HOURS) : LocalTime.now().truncatedTo(ChronoUnit.HOURS).plusMinutes(30);
 
-        startTimeField = new CustomTextField(timeFormat, TIME_FORMATTER.format(time), fieldWidth);
+        startTimeField = new CustomTextField(timeFormat, TIME_FORMATTER.format(startTime), fieldWidth);
         gbc.insets = new Insets(0, 20, 0, 0);
         gbc.gridx = 1;
         gbc.gridy = 3;
@@ -122,8 +125,7 @@ public class NewEventDialog extends JDialog {
         gbag.setConstraints(endDateLabel, gbc);
         centerPanel.add(endDateLabel);
 
-        endTimeField = new CustomTextField(timeFormat, TIME_FORMATTER.format(time),  fieldWidth);
-        endTimeField.setText(String.format("%02d:%02d", currentTime.getMinute() > 30 ? currentTime.getHour() + 1 : currentTime.getHour(), currentTime.getMinute() > 30 ? 0 : 30));
+        endTimeField = new CustomTextField(timeFormat, TIME_FORMATTER.format(startTime.plusHours(1)),  fieldWidth);
         gbc.insets = new Insets(0, 20, 0, 0);
         gbc.gridx = 1;
         gbc.gridy = 5;
@@ -153,6 +155,7 @@ public class NewEventDialog extends JDialog {
                 LocalDateTime endDateAndTime = LocalDateTime.of(LocalDate.parse(endDateField.getText(), DATE_FORMATTER), LocalTime.parse(endTimeField.getText(), TIME_FORMATTER));
                 Event event = new Event(eventTitleField.getText(), startDateAndTime, endDateAndTime);
                 insertNewEvent(event);
+                NewEventDialog.this.dispose();
             }
         });
 
@@ -171,7 +174,7 @@ public class NewEventDialog extends JDialog {
 
     private void insertNewEvent(Event anEvent){
         final String insertEventSql = "INSERT INTO event(title, startdateandtime, enddateandtime)" + "VALUES(?,?,?)";
-        long id = 0;
+        //int id = 0;
 
         try {
             PreparedStatement statement = DBUtils.getConnection().prepareStatement(insertEventSql, Statement.RETURN_GENERATED_KEYS);
@@ -183,14 +186,15 @@ public class NewEventDialog extends JDialog {
                 try {
                     ResultSet resultSet = statement.getGeneratedKeys();
                     if (resultSet.next()) {
-                        id = resultSet.getLong(1);
-                        Logger.getGlobal().info("id: " + id);
+                        Logger.getGlobal().info("resultSet: " + resultSet.getString(2));
+                        Logger.getGlobal().info("AffectedRows: " + affectedRows);
                     }
                 } catch (SQLException sqlEx) {
                     System.out.println(sqlEx.getMessage());
                 }
             }
-            this.view.setNewGrid();
+            DayView.getSelectedView().reload();
+
         }
 
         catch(SQLException sqlEx){

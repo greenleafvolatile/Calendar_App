@@ -23,18 +23,21 @@ import java.util.List;
 class DayView extends CalendarView {
 
 
-    final static Dimension INITIAL_DIMENSION=new Dimension(100, 100);
-    public static JList previousList = null;
+    final static Dimension INITIAL_DIMENSION = new Dimension(100, 100);
+    private static JList previousList = null;
+    private static Event selectedEvent = null;
+    private static DayView selectedView = null;
 
-    private MonthView currentView;
     private DefaultListModel<Event> lm;
+    private int selectedEventIndex;
 
-
-
-    DayView(LocalDate date, MonthView view){
+    DayView(LocalDate date) {
 
         super(date);
-        this.currentView = view;
+        this.initGUI();
+    }
+
+    private void initGUI() {
 
         this.setLayout(new BorderLayout());
 
@@ -45,11 +48,11 @@ class DayView extends CalendarView {
         dateLabel.setBorder(BorderFactory.createEtchedBorder());
         this.add(dateLabel, BorderLayout.NORTH);
 
-
         lm = new DefaultListModel<>();
 
         JList<Event> list = new JList<>(lm) {
-            // Override locationToIndex to prevent the last item on the list to be selected when the user clicks
+
+            // Override locationToIndex() to prevent the last item on the list to be selected when the user clicks
             // outside the bounds of (below) the last cell of the list.
             @Override
             public int locationToIndex(Point location) {
@@ -57,46 +60,55 @@ class DayView extends CalendarView {
                 Logger.getGlobal().info("" + index);
                 if (index != -1 && !getCellBounds(index, index).contains(location)) {
                     return -1;
-                }
-                else {
+                } else {
                     return index;
                 }
             }
         };
+
+        // You can only ever select one event at a time.
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        // Custom cel-renderer to display Event data in list.
         list.setCellRenderer(new EventListRenderer());
 
-        // Add a MouseListener so that when the user left clicks on a specific date
-        // that date will be the selected date with a red border.
-        // When the user right clicks an event a popup menu will render.
         list.addMouseListener(new MouseAdapter() {
 
             @Override
             public void mousePressed(MouseEvent mE) {
                 maybeShowPopUp(mE);
-
             }
 
             @Override
             public void mouseReleased(MouseEvent mE) {
                 maybeShowPopUp(mE);
-
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent mE){
-                DayView.this.currentView.getSelectedDay().setSelected(false);
-                DayView.this.setSelected(true);
-                DayView.this.currentView.setSelectedDay(DayView.this);
             }
 
             private void maybeShowPopUp(MouseEvent mE) {
 
-                if (mE.isPopupTrigger()) {
 
-                    int selectedEventIndex = list.getSelectedIndex();
+                // If an event is selected on a specific date, the previous selected event is unselected.
+                if (previousList != null && mE.getSource() != previousList) {
+                    previousList.clearSelection();
+                }
+                previousList = (JList) mE.getSource();
 
-                    if (selectedEventIndex != -1) {
+                //When the user left clicks on a specific date
+                //that date will be the selected date with a red border.
+                DayView.selectedView.setSelectedView(false);
+                DayView.this.setSelectedView(true);
+
+                selectedEventIndex = list.getSelectedIndex();
+
+                if (selectedEventIndex != -1) {
+
+                    // The ButtonPanel needs to know if an event has been selected and if so it needs a reference to it.
+                    selectedEvent = lm.getElementAt(selectedEventIndex);
+
+                    // When the user right clicks an event a popup menu will be brought up.
+                    // The exact gesture that should bring up a popupmenu varies by look and feel.
+                    if (mE.isPopupTrigger()) {
+
+                        //if (selectedEventIndex != -1) {
 
                         // I need the width in pixels of the text in a cell of the list for the location of the popup.
                         // For that I need a FontMetrics object.
@@ -116,78 +128,60 @@ class DayView extends CalendarView {
                         Rectangle bounds = list.getCellBounds(selectedEventIndex, selectedEventIndex);
                         Point point = bounds.getLocation();
 
-
-                        JPopupMenu menu = new CustomPopUp(lm.getElementAt(selectedEventIndex));
+                        JPopupMenu menu = new CustomPopUp();
 
                         // Show the popup in the JList at the end of the text in a selected cell, underneath that cell.
                         menu.show(list, (int) (point.getX() + width), (int) (point.getY() + bounds.getHeight()));
-
                     }
                 }
-            }
-        });
-
-        // Add a ListSelectionListener so that when an event is selected on a specific date
-        // events that were selected on another date are unselected.
-        list.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent lSE) {
-
-                if (DayView.previousList != null && lSE.getSource() != previousList) {
-                    previousList.getSelectedIndex();
-                    previousList.clearSelection();
+                else {
+                    selectedEvent = null;
                 }
-                previousList = (JList) lSE.getSource();
             }
         });
 
-        //JScrollPane scrollPane = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.add(list, BorderLayout.CENTER);
         this.getEvents();
-
     }
+
 
     @Override
-    public Dimension getPreferredSize(){ // Perhaps it shouldn't be the tiles that determine the size of the app. Perhaps the tiles should be made to fit into a frame of a certain size.
+    public Dimension getPreferredSize() { // Perhaps it shouldn't be the tiles that determine the size of the app. Perhaps the tiles should be made to fit into a frame of a certain size.
         return INITIAL_DIMENSION;
     }
 
-    protected static Dimension getInitialDimension(){
+    protected static Dimension getInitialDimension() {
         return INITIAL_DIMENSION;
     }
 
-    protected void setSelected(boolean isSelected){
-        if(isSelected) {
-            this.setBorder(BorderFactory.createLineBorder(Color.RED));
-        }
-        else {
+    protected void setSelectedView(boolean isSelected) {
+        if (isSelected) {
+            DayView.selectedView = DayView.this;
+            this.setBorder(BorderFactory.createLineBorder(Color.YELLOW));
+        } else {
             this.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         }
     }
 
-    protected CalendarView getSelectedView(){
-        return this;
+    protected static DayView getSelectedView() {
+        return DayView.selectedView;
     }
 
-    protected void setSelectedView(CalendarView aView){
-        // do nothing method. Design flaw?
-    }
 
     private void getEvents() {
-        //lm.removeAllElements();
         String sql = "SELECT * FROM Event WHERE DATE(startDateAndTime)=? ORDER BY startDateAndTime::time;";  // I could order here with ORDER BY or I could add it all to a collection and let the user sort.
-        try{
+        try {
             PreparedStatement statement = DBUtils.getConnection().prepareStatement(sql);
             statement.setObject(1, Date.valueOf(this.getDate()));
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
+                Logger.getGlobal().info("Next!");
 
                 Event event = new Event(resultSet.getInt(1), resultSet.getString(2), resultSet.getTimestamp(3).toLocalDateTime(), resultSet.getTimestamp(4).toLocalDateTime());
                 lm.addElement(event);
             }
-        }
-        catch(SQLException sqlEx) {
+        } catch (SQLException sqlEx) {
             sqlEx.printStackTrace();
         }
     }
@@ -196,28 +190,36 @@ class DayView extends CalendarView {
         return this.getDate().toString();
     }
 
+    public static Event getSelectedEvent() {
+        return selectedEvent;
+    }
+
+    protected void deleteEvent() {
+        DBUtils.deleteEvent(lm.getElementAt(selectedEventIndex).getId());
+        lm.removeElementAt(selectedEventIndex);
+    }
+
+    protected void reload() {
+        lm.clear();
+        getEvents();
+    }
 
     public class CustomPopUp extends JPopupMenu {
 
-        private Event event;
 
-        public CustomPopUp(Event event) {
-            this.event = event;
+        public CustomPopUp() {
 
             this.add(new AbstractAction("Edit") {
                 @Override
                 public void actionPerformed(ActionEvent actionEvent) {
-                    new EditEventDialog(event);
+                    new EditEventDialog((JFrame) DayView.this.getTopLevelAncestor(), lm.getElementAt(selectedEventIndex));
                 }
             });
 
             this.add(new AbstractAction("Delete") {
-
+                @Override
                 public void actionPerformed(ActionEvent ae) {
-                    Logger.getGlobal().info("" + DBUtils.deleteEvent(event.getId()));
-                    lm.removeAllElements();
-                    DayView.this.getEvents();
-
+                    DayView.this.deleteEvent();
                 }
             });
         }

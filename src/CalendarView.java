@@ -9,6 +9,8 @@ import java.sql.Connection;
 
 public abstract class CalendarView extends JPanel {
 
+    private static final long serialVersionUID = 1L;
+
     private LocalDate selectedDate;
     private LocalDate date;
     private DayOfWeek firstDayOfTheWeek;
@@ -47,14 +49,14 @@ public abstract class CalendarView extends JPanel {
         this.firstDayOfTheWeek=preferredFirstDayOfTheWeek;
     }
 
-    protected void setSelected(boolean isSelected){
+    /*protected void setSelected(boolean isSelected){
         if(isSelected){
             setBorder(BorderFactory.createLineBorder(Color.RED));
         }
         else{
             setBorder(BorderFactory.createLineBorder(Color.BLACK));
         }
-    }
+    }*/
 
     /*protected abstract CalendarView getSelectedView();*/
 
